@@ -1,4 +1,4 @@
-import { it, describe, expect } from 'vitest'
+import { it, describe, expect, vi } from 'vitest'
 import { mount, shallowMount } from '@vue/test-utils'
 import VueSelect from '@/components/Select.vue'
 import { mountDefault } from '@tests/helpers.js'
@@ -10,6 +10,31 @@ describe('When reduce prop is defined', () => {
 
     await Select.setProps({ reduce: () => {} })
     expect(Select.vm.isReducingValues).toBeTruthy()
+  })
+
+  //  isTrackingValues is a deprecated alias kept for backwards
+  //  compatibility (see the doc comment in Select.vue) — nothing in
+  //  the component itself calls it anymore since the Session 3
+  //  controlled-component refactor, but it's still public API.
+  it('isTrackingValues stays in sync with isControlled/isReducingValues (deprecated alias)', async () => {
+    const Select = shallowMount(VueSelect, {
+      props: { options: ['one'] },
+    })
+
+    //  Uncontrolled (no modelValue bound) -> always tracking.
+    expect(Select.vm.isControlled).toBe(false)
+    expect(Select.vm.isTrackingValues).toBe(true)
+
+    //  Controlled, no reduce -> not tracking.
+    await Select.setProps({ modelValue: 'one' })
+    expect(Select.vm.isControlled).toBe(true)
+    expect(Select.vm.isReducingValues).toBe(false)
+    expect(Select.vm.isTrackingValues).toBe(false)
+
+    //  Controlled + reduce -> tracking again.
+    await Select.setProps({ reduce: (option) => option })
+    expect(Select.vm.isReducingValues).toBe(true)
+    expect(Select.vm.isTrackingValues).toBe(true)
   })
 
   it('can accept an array of objects and pre-selected value (single)', () => {
@@ -308,6 +333,71 @@ describe('When reduce prop is defined', () => {
         'hello'
       )
       expect(Parent.vm.selected).toEqual(-1)
+    })
+  })
+
+  //  Regression coverage for the reduce-collision tie-break documented in
+  //  findOptionFromReducedValue (see
+  //  https://github.com/sagalbot/vue-select/issues/1089#issuecomment-597238735).
+  //  When two different option objects reduce to the same value (taggable +
+  //  reduce with a create-option that isn't unique), a naive `matches[0]`
+  //  lookup would silently pick whichever one happens to be first in the
+  //  array. The real fix disambiguates using `_lastResolvedValue` — the
+  //  option resolved on the *previous* read — so a stable selection doesn't
+  //  flip to a different option just because the options array was
+  //  reordered. This path had zero test coverage before this session.
+  describe('Reduce collision tie-break (#1089)', () => {
+    it('prefers the previously-resolved option over the first array match when two options share a reduced value', async () => {
+      const optionA = { id: 1, label: 'A' }
+      const optionB = { id: 2, label: 'B' }
+
+      const Select = shallowMount(VueSelect, {
+        props: {
+          reduce: () => 'dup',
+          modelValue: 'dup',
+          options: [optionA, optionB],
+        },
+      })
+
+      //  Establish optionA as the previously-resolved match (this is
+      //  `_lastResolvedValue` bookkeeping — a plain instance field, not
+      //  reactive state — normally populated by a prior `resolvedValue`
+      //  read; set directly here so the test is deterministic about what
+      //  it's exercising instead of depending on incidental mount timing).
+      Select.vm._lastResolvedValue = optionA
+
+      //  Both options reduce to the same value, so `matches.length` is 2
+      //  and the tie-break in `findOptionFromReducedValue` must run. optionB
+      //  is first in the array — if the tie-break were absent (or just
+      //  returned matches[0]), this would resolve to optionB instead of
+      //  the previously-resolved optionA.
+      await Select.setProps({ options: [optionB, optionA] })
+
+      expect(Select.vm.selectedValue).toEqual([optionA])
+    })
+
+    it('falls back to the raw value when there is no previously-resolved match to disambiguate with', () => {
+      const optionA = { id: 1, label: 'A' }
+      const optionB = { id: 2, label: 'B' }
+
+      //  getOptionKey(null) can't stringify a null option and warns —
+      //  expected here since `_lastResolvedValue` starts out null.
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      //  Mounting directly with a collision already present and no prior
+      //  resolution: `_lastResolvedValue` is still null, so the `.find()`
+      //  tie-break can't match anything and falls through to `|| value`.
+      const Select = shallowMount(VueSelect, {
+        props: {
+          reduce: () => 'dup',
+          modelValue: 'dup',
+          options: [optionB, optionA],
+        },
+      })
+
+      expect(Select.vm.selectedValue).toEqual(['dup'])
+
+      warnSpy.mockRestore()
     })
   })
 })

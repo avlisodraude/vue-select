@@ -373,4 +373,89 @@ describe('Toggling Dropdown', () => {
       expect(Select.vm.open).toEqual(false)
     })
   })
+
+  //  onMousedown/onMouseUp had zero test coverage. They exist to work
+  //  around IE11 (probably 10 too) firing a native `blur` when the
+  //  dropdown's own scrollbar is clicked, which would otherwise collapse
+  //  the dropdown mid-interaction. See
+  //  https://github.com/sagalbot/vue-select/issues/106
+  describe('mousedown/mouseup on the dropdown menu (#106 IE workaround)', () => {
+    it('sets this.mousedown to true on mousedown and false on mouseup', async () => {
+      const Select = selectWithProps({ options: ['one', 'two', 'three'] })
+
+      Select.vm.open = true
+      await Select.vm.$nextTick()
+
+      expect(Select.vm.mousedown).toBeFalsy()
+
+      await Select.find('.vs__dropdown-menu').trigger('mousedown')
+      expect(Select.vm.mousedown).toEqual(true)
+
+      await Select.find('.vs__dropdown-menu').trigger('mouseup')
+      expect(Select.vm.mousedown).toEqual(false)
+    })
+  })
+
+  //  onDropdownScroll keeps the (experimental, opt-in) virtual-scroll
+  //  window in sync with the dropdown's real scroll position. Added in
+  //  the perf/virtualization session but never directly exercised.
+  describe('onDropdownScroll (virtual-scroll sync)', () => {
+    it('is a no-op when virtualScroll is not enabled', () => {
+      const Select = selectWithProps({ options: ['one', 'two', 'three'] })
+      const before = {
+        top: Select.vm.virtualScrollTop,
+        height: Select.vm.virtualScrollViewportHeight,
+      }
+
+      Select.vm.onDropdownScroll({
+        target: { scrollTop: 500, clientHeight: 300 },
+      })
+
+      expect(Select.vm.virtualScrollTop).toEqual(before.top)
+      expect(Select.vm.virtualScrollViewportHeight).toEqual(before.height)
+    })
+
+    it('syncs virtualScrollTop and virtualScrollViewportHeight from the scroll event when enabled', () => {
+      const Select = selectWithProps({
+        options: ['one', 'two', 'three'],
+        virtualScroll: true,
+      })
+
+      Select.vm.onDropdownScroll({
+        target: { scrollTop: 123, clientHeight: 456 },
+      })
+
+      expect(Select.vm.virtualScrollTop).toEqual(123)
+      expect(Select.vm.virtualScrollViewportHeight).toEqual(456)
+    })
+  })
+
+  //  isOptionDeselectable has no call sites anywhere in the component —
+  //  the template computes the equivalent inline (`visibleOptions`'
+  //  `deselectable` flag) — but it's still a public method on the
+  //  instance with its own behavior, so it's tested directly here.
+  describe('isOptionDeselectable', () => {
+    it('is true only when the option is selected and deselectFromDropdown is enabled', () => {
+      const Select = selectWithProps({
+        modelValue: [{ label: 'one' }],
+        options: [{ label: 'one' }, { label: 'two' }],
+        multiple: true,
+        deselectFromDropdown: true,
+      })
+
+      expect(Select.vm.isOptionDeselectable({ label: 'one' })).toEqual(true)
+      expect(Select.vm.isOptionDeselectable({ label: 'two' })).toEqual(false)
+    })
+
+    it('is false when deselectFromDropdown is disabled, even for a selected option', () => {
+      const Select = selectWithProps({
+        modelValue: [{ label: 'one' }],
+        options: [{ label: 'one' }],
+        multiple: true,
+        deselectFromDropdown: false,
+      })
+
+      expect(Select.vm.isOptionDeselectable({ label: 'one' })).toEqual(false)
+    })
+  })
 })

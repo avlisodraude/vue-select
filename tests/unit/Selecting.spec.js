@@ -141,7 +141,12 @@ describe('VS - Selecting Values', () => {
     expect(select.isValueEmpty).toEqual(true)
   })
 
-  it('should reset the selected values when the multiple property changes', () => {
+  it('should reset the selected values when the multiple property changes', async () => {
+    //  Uncontrolled `uncontrolledValue` defaults to `[]`, so a selection
+    //  has to actually be made first — otherwise `selectedValue` is `[]`
+    //  before *and* after the prop change regardless of whether the
+    //  `multiple` watcher runs at all, and the assertion proves nothing.
+    const clearSpy = vi.spyOn(VueSelect.methods, 'clearSelection')
     const Select = shallowMount(VueSelect, {
       props: {
         multiple: true,
@@ -149,11 +154,19 @@ describe('VS - Selecting Values', () => {
       },
     })
 
-    Select.setProps({ multiple: false })
+    Select.vm.$data.uncontrolledValue = ['one', 'two']
+    expect(Select.vm.selectedValue).toEqual(['one', 'two'])
+
+    await Select.setProps({ multiple: false })
+    expect(clearSpy).toHaveBeenCalledTimes(1)
     expect(Select.vm.selectedValue).toEqual([])
 
-    Select.setProps({ multiple: true })
+    Select.vm.$data.uncontrolledValue = ['three']
+    await Select.setProps({ multiple: true })
+    expect(clearSpy).toHaveBeenCalledTimes(2)
     expect(Select.vm.selectedValue).toEqual([])
+
+    clearSpy.mockRestore()
   })
 
   it('can retain values present in a new array of options', () => {
