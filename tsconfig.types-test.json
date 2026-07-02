@@ -1,0 +1,13 @@
+{
+    "extends": "@vue/tsconfig/tsconfig.web.json",
+    "compilerOptions": {
+        "composite": false,
+        "noEmit": true,
+        "strict": true,
+        "baseUrl": ".",
+        "paths": {
+            "vue-select": ["./types/vue-select.d.ts"]
+        }
+    },
+    "include": ["types/vue-select.d.ts", "tests/types/**/*.ts"]
+}

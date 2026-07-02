@@ -13,8 +13,10 @@
     ],
     "main": "./dist/vue-select.umd.js",
     "module": "./dist/vue-select.es.js",
+    "types": "./dist/vue-select.d.ts",
     "exports": {
         ".": {
+            "types": "./dist/vue-select.d.ts",
             "import": "./dist/vue-select.es.js",
             "require": "./dist/vue-select.umd.js"
         },
@@ -33,11 +35,12 @@
         "semantic-release": "semantic-release",
         "commit": "git-cz",
         "dev": "vite",
-        "build": "vue-tsc --noEmit && vite build",
+        "build": "vue-tsc --noEmit && vite build && node scripts/copy-dts.mjs",
         "preview": "vite preview --port 5050",
         "test": "vitest --environment jsdom",
         "coverage": "vitest --run --coverage --environment jsdom --silent",
         "typecheck": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false",
+        "typecheck:types": "vue-tsc --noEmit -p tsconfig.types-test.json",
         "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
     },
     "repository": {
