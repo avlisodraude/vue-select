@@ -91,30 +91,45 @@
         :aria-multiselectable="multiple ? 'true' : null"
         @mousedown.prevent="onMousedown"
         @mouseup="onMouseUp"
+        @scroll="onDropdownScroll"
       >
         <slot name="list-header" v-bind="scope.listHeader" />
         <li
-          v-for="(option, index) in filteredOptions"
-          :id="`vs${uid}__option-${index}`"
-          :key="getOptionKey(option)"
+          v-if="virtualScroll && virtualScrollPadding.top"
+          class="vs__dropdown-option--spacer"
+          role="presentation"
+          aria-hidden="true"
+          :style="{ height: `${virtualScrollPadding.top}px` }"
+        />
+        <li
+          v-for="opt in visibleOptions"
+          :id="`vs${uid}__option-${opt.index}`"
+          :key="opt.key"
           role="option"
           class="vs__dropdown-option"
           :class="{
             'vs__dropdown-option--deselect':
-              isOptionDeselectable(option) && index === typeAheadPointer,
-            'vs__dropdown-option--selected': isOptionSelected(option),
-            'vs__dropdown-option--highlight': index === typeAheadPointer,
-            'vs__dropdown-option--disabled': !selectable(option),
+              opt.deselectable && opt.index === typeAheadPointer,
+            'vs__dropdown-option--selected': opt.selected,
+            'vs__dropdown-option--highlight': opt.index === typeAheadPointer,
+            'vs__dropdown-option--disabled': !opt.selectable,
           }"
-          :aria-selected="isOptionSelected(option) ? true : null"
-          :aria-disabled="!selectable(option) ? true : null"
-          @mouseover="selectable(option) ? (typeAheadPointer = index) : null"
-          @click.prevent.stop="selectable(option) ? select(option) : null"
+          :aria-selected="opt.selected ? true : null"
+          :aria-disabled="!opt.selectable ? true : null"
+          @mouseover="opt.selectable ? (typeAheadPointer = opt.index) : null"
+          @click.prevent.stop="opt.selectable ? select(opt.option) : null"
         >
-          <slot name="option" v-bind="normalizeOptionForSlot(option)">
-            {{ getOptionLabel(option) }}
+          <slot name="option" v-bind="normalizeOptionForSlot(opt.option)">
+            {{ opt.label }}
           </slot>
         </li>
+        <li
+          v-if="virtualScroll && virtualScrollPadding.bottom"
+          class="vs__dropdown-option--spacer"
+          role="presentation"
+          aria-hidden="true"
+          :style="{ height: `${virtualScrollPadding.bottom}px` }"
+        />
         <li v-if="filteredOptions.length === 0" class="vs__no-options">
           <slot name="no-options" v-bind="scope.noOptions">
             Sorry, no matching options.
@@ -236,6 +251,39 @@ export default {
     deselectFromDropdown: {
       type: Boolean,
       default: false,
+    },
+
+    /**
+     * EXPERIMENTAL — opt-in virtual scrolling.
+     *
+     * When true, the dropdown only renders the options currently
+     * visible within the scroll viewport (plus a small buffer),
+     * instead of one `<li>` per option. This keeps the DOM small
+     * for very large option lists.
+     *
+     * This is groundwork/foundation only: it assumes a fixed row
+     * height (see `virtualScrollRowHeight`) and does not yet handle
+     * variable-height rows, grouped options, or keyboard-autoscroll
+     * alignment perfectly. Treat it as experimental.
+     *
+     * @type {Boolean}
+     */
+    virtualScroll: {
+      type: Boolean,
+      default: false,
+    },
+
+    /**
+     * EXPERIMENTAL — the assumed height, in pixels, of a single
+     * option row. Only used when `virtualScroll` is enabled to
+     * calculate which rows fall inside the viewport. Rows must be
+     * this height for the windowing math to line up.
+     *
+     * @type {Number}
+     */
+    virtualScrollRowHeight: {
+      type: Number,
+      default: 40,
     },
 
     /**
@@ -703,6 +751,12 @@ export default {
        */
       uncontrolledValue: [],
       deselectButtons: [],
+      /**
+       * EXPERIMENTAL virtual-scroll bookkeeping. Only meaningful when
+       * the `virtualScroll` prop is enabled; ignored otherwise.
+       */
+      virtualScrollTop: 0,
+      virtualScrollViewportHeight: 0,
     }
   },
 
@@ -971,6 +1025,117 @@ export default {
     },
 
     /**
+     * A lookup set of the option keys that are currently selected.
+     *
+     * Recomputed only when the selection actually changes — NOT on
+     * hover. This lets `isOptionSelected` (and `renderableOptions`)
+     * answer "is this option selected?" with an O(1) set lookup
+     * instead of scanning `selectedValue` and re-serializing every
+     * option on every render.
+     *
+     * @return {Set}
+     */
+    selectedOptionKeys() {
+      const keys = new Set()
+      for (let i = 0; i < this.selectedValue.length; i++) {
+        keys.add(this.getOptionKey(this.selectedValue[i]))
+      }
+      return keys
+    },
+
+    /**
+     * The per-option data needed to render each dropdown row,
+     * precomputed once per (filteredOptions × selection) change.
+     *
+     * Everything here — the key, label, selectability, and selected/
+     * deselectable state — is independent of `typeAheadPointer`, so
+     * hoisting it into a cached computed means moving the mouse over
+     * the list (which only mutates `typeAheadPointer`) no longer
+     * re-runs `getOptionKey`/`getOptionLabel`/`selectable`/
+     * `isOptionSelected` for every option. The only per-row work left
+     * on hover is the cheap `index === typeAheadPointer` compare in
+     * the template. This is the fix for the O(n)-per-hover regression
+     * in #1868.
+     *
+     * @return {Array<Object>}
+     */
+    renderableOptions() {
+      return this.filteredOptions.map((option, index) => {
+        const key = this.getOptionKey(option)
+        const selected = this.selectedOptionKeys.has(key)
+        return {
+          option,
+          index,
+          key,
+          label: this.getOptionLabel(option),
+          selectable: this.selectable(option),
+          selected,
+          deselectable: selected && this.deselectFromDropdown,
+        }
+      })
+    },
+
+    /**
+     * The subset of `renderableOptions` actually rendered to the DOM.
+     *
+     * With `virtualScroll` disabled (the default) this is simply every
+     * option. With it enabled, only the rows intersecting the current
+     * scroll viewport (plus a small buffer above and below) are
+     * returned — see `virtualScrollPadding` for the spacers that keep
+     * the scrollbar sized correctly.
+     *
+     * @return {Array<Object>}
+     */
+    visibleOptions() {
+      if (!this.virtualScroll) {
+        return this.renderableOptions
+      }
+
+      const rowHeight = this.virtualScrollRowHeight
+      const total = this.renderableOptions.length
+      const buffer = 5
+
+      const viewport =
+        this.virtualScrollViewportHeight ||
+        // Fallback to the CSS max-height before the menu has been
+        // measured, so the very first paint still windows sensibly.
+        350
+
+      const start = Math.max(
+        0,
+        Math.floor(this.virtualScrollTop / rowHeight) - buffer
+      )
+      const visibleCount = Math.ceil(viewport / rowHeight) + buffer * 2
+      const end = Math.min(total, start + visibleCount)
+
+      return this.renderableOptions.slice(start, end)
+    },
+
+    /**
+     * EXPERIMENTAL — the top/bottom spacer heights (px) that stand in
+     * for the un-rendered rows above and below the virtual window, so
+     * the dropdown's scrollbar reflects the full option count.
+     *
+     * @return {{top: Number, bottom: Number}}
+     */
+    virtualScrollPadding() {
+      if (!this.virtualScroll || this.visibleOptions.length === 0) {
+        return { top: 0, bottom: 0 }
+      }
+
+      const rowHeight = this.virtualScrollRowHeight
+      const total = this.renderableOptions.length
+      const firstIndex = this.visibleOptions[0].index
+      const lastIndex =
+        this.visibleOptions[this.visibleOptions.length - 1].index
+
+      return {
+        top: firstIndex * rowHeight,
+        bottom: (total - lastIndex - 1) * rowHeight,
+      }
+    },
+
+    /**
      * Check if there aren't any options selected.
      * @return {Boolean}
      */
@@ -1027,6 +1192,21 @@ export default {
 
     open(isOpen) {
       this.$emit(isOpen ? 'open' : 'close')
+
+      // EXPERIMENTAL virtual-scroll: reset the window on each open and
+      // measure the viewport once the menu has rendered, so the first
+      // paint windows against the real height rather than the fallback.
+      if (this.virtualScroll) {
+        this.virtualScrollTop = 0
+        if (isOpen) {
+          this.$nextTick(() => {
+            const menu = this.$refs.dropdownMenu
+            if (menu) {
+              this.virtualScrollViewportHeight = menu.clientHeight
+            }
+          })
+        }
+      }
     },
   },
 
@@ -1184,9 +1364,13 @@ export default {
      * @return {Boolean}        True when selected | False otherwise
      */
     isOptionSelected(option) {
-      return this.selectedValue.some((value) =>
-        this.optionComparator(value, option)
-      )
+      // Short-circuit when nothing is selected — mirrors the old
+      // `selectedValue.some(...)` behaviour and avoids computing a key
+      // for `option` (which may be null/empty) when it can't match.
+      if (this.selectedOptionKeys.size === 0) {
+        return false
+      }
+      return this.selectedOptionKeys.has(this.getOptionKey(option))
     },
 
     /**
@@ -1395,6 +1579,18 @@ export default {
      */
     onMouseUp() {
       this.mousedown = false
+    },
+
+    /**
+     * EXPERIMENTAL — keep the virtual-scroll window in sync with the
+     * dropdown's scroll position. No-op unless `virtualScroll` is on.
+     * @param {UIEvent} e
+     * @return {void}
+     */
+    onDropdownScroll(e) {
+      if (!this.virtualScroll) return
+      this.virtualScrollTop = e.target.scrollTop
+      this.virtualScrollViewportHeight = e.target.clientHeight
     },
 
     /**
