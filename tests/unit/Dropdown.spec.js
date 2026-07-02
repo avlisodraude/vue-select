@@ -102,6 +102,47 @@ describe('Toggling Dropdown', () => {
     expect(spy).toHaveBeenCalled()
   })
 
+  //  Regression guard for #1854. Chrome's "keyboard focusable scrollers"
+  //  (default since Chrome 130) makes the scrollable dropdown menu focusable,
+  //  so interacting with its scrollbar can move focus off the search input.
+  it('renders the dropdown menu with tabindex="-1" so it is not keyboard focusable', async () => {
+    const Select = selectWithProps({ options: ['one', 'two', 'three'] })
+
+    Select.vm.open = true
+    await Select.vm.$nextTick()
+
+    expect(Select.find('.vs__dropdown-menu').attributes('tabindex')).toEqual(
+      '-1'
+    )
+  })
+
+  it('keeps the dropdown open when focus moves into the dropdown menu on blur', async () => {
+    const Select = selectWithProps({ options: ['one', 'two', 'three'] })
+    const focusSpy = vi.spyOn(Select.vm.$refs.search, 'focus')
+
+    Select.vm.open = true
+    await Select.vm.$nextTick()
+
+    const menu = Select.vm.$refs.dropdownMenu
+    const optionInMenu = menu.querySelector('.vs__dropdown-option')
+
+    //  Emulate the browser moving focus onto the scrollable menu.
+    Select.vm.onSearchBlur({ relatedTarget: optionInMenu })
+
+    expect(Select.vm.open).toEqual(true)
+    expect(focusSpy).toHaveBeenCalled()
+  })
+
+  it('still closes the dropdown when focus leaves the component entirely', () => {
+    const Select = selectWithProps({ options: ['one', 'two', 'three'] })
+
+    Select.vm.open = true
+    //  Focus moving to an element outside the component (or nowhere) must close.
+    Select.vm.onSearchBlur({ relatedTarget: document.body })
+
+    expect(Select.vm.open).toEqual(false)
+  })
+
   it('will open the dropdown and emit the search:focus event from onSearchFocus', () => {
     spy = vi.spyOn(VueSelect.methods, 'onSearchFocus')
     const Select = selectWithProps()

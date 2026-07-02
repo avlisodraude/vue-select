@@ -1270,9 +1270,28 @@ export default {
     /**
      * Close the dropdown on blur.
      * @emits  {search:blur}
+     * @param {FocusEvent} [e]
      * @return {void}
      */
-    onSearchBlur() {
+    onSearchBlur(e) {
+      //  Chrome's "keyboard focusable scrollers" (default since Chrome 130,
+      //  Oct 2024) makes the scrollable `.vs__dropdown-menu` focusable. When
+      //  focus moves from the search input into our own dropdown menu — e.g.
+      //  interacting with its scrollbar — the input blurs, which would
+      //  otherwise collapse the dropdown mid-interaction. Keep it open and
+      //  hand focus back to the search input instead.
+      //  @see https://github.com/sagalbot/vue-select/issues/1854
+      const relatedTarget = e && e.relatedTarget
+      const dropdownMenu = this.$refs.dropdownMenu
+      if (
+        relatedTarget &&
+        dropdownMenu &&
+        dropdownMenu.contains(relatedTarget)
+      ) {
+        if (this.searchEl) this.searchEl.focus()
+        return
+      }
+
       if (this.mousedown && !this.searching) {
         this.mousedown = false
       } else {
