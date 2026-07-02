@@ -112,6 +112,66 @@ describe('Removing values', () => {
     expect(deselect).not.toHaveBeenCalledWith('one')
   })
 
+  describe('Keyboard operability', () => {
+    //  Per the WAI-ARIA APG combobox pattern, per-tag remove controls and
+    //  the clear-all control just need to be genuine native <button>
+    //  elements in the tab order — browsers dispatch a click on Enter/Space
+    //  automatically, so that's the real guarantee of keyboard operability
+    //  here (not something a synthetic keydown test can meaningfully add).
+    it('the per-tag deselect control is a native, tabbable button (not a div/span with only a click handler)', () => {
+      const Select = selectWithProps({
+        modelValue: ['one'],
+        options: ['one', 'two', 'three'],
+        multiple: true,
+      })
+
+      const deselectButton = Select.find('.vs__deselect')
+      expect(deselectButton.element.tagName).toEqual('BUTTON')
+      expect(deselectButton.attributes('type')).toEqual('button')
+      expect(deselectButton.attributes('tabindex')).not.toEqual('-1')
+      expect(deselectButton.attributes('aria-label')).toBeTruthy()
+    })
+
+    it('the clear-all control is a native, tabbable button', () => {
+      const Select = selectWithProps({
+        modelValue: 'foo',
+        options: ['foo', 'bar'],
+      })
+
+      const clearButton = Select.find('button.vs__clear')
+      expect(clearButton.element.tagName).toEqual('BUTTON')
+      expect(clearButton.attributes('type')).toEqual('button')
+      expect(clearButton.attributes('tabindex')).not.toEqual('-1')
+      expect(clearButton.attributes('aria-label')).toBeTruthy()
+    })
+
+    it('removes the last tag via Backspace when the search input is empty (keyboard-only tag removal)', () => {
+      const Select = selectWithProps({
+        multiple: true,
+        options: ['one', 'two', 'three'],
+      })
+      Select.vm.$data.uncontrolledValue = ['one', 'two']
+
+      Select.get('input').trigger('keydown.backspace')
+
+      expect(Select.vm.selectedValue).toEqual(['one'])
+    })
+
+    it('does not delete a tag via Backspace while the search input still has text', async () => {
+      const Select = selectWithProps({
+        multiple: true,
+        options: ['one', 'two', 'three'],
+      })
+      Select.vm.$data.uncontrolledValue = ['one', 'two']
+      Select.vm.search = 'partial query'
+      await Select.vm.$nextTick()
+
+      await Select.get('input').trigger('keydown.backspace')
+
+      expect(Select.vm.selectedValue).toEqual(['one', 'two'])
+    })
+  })
+
   describe('Clear button', () => {
     it('should be displayed on single select when value is selected', () => {
       const Select = selectWithProps({

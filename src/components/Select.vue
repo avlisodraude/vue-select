@@ -9,10 +9,6 @@
       :id="`vs${uid}__combobox`"
       ref="toggle"
       class="vs__dropdown-toggle"
-      role="combobox"
-      :aria-expanded="dropdownOpen.toString()"
-      :aria-owns="`vs${uid}__listbox`"
-      aria-label="Search for option"
       @mousedown="toggleDropdown($event)"
     >
       <div ref="selectedOptions" class="vs__selected-options">
@@ -92,6 +88,7 @@
         class="vs__dropdown-menu"
         role="listbox"
         tabindex="-1"
+        :aria-multiselectable="multiple ? 'true' : null"
         @mousedown.prevent="onMousedown"
         @mouseup="onMouseUp"
       >
@@ -109,7 +106,8 @@
             'vs__dropdown-option--highlight': index === typeAheadPointer,
             'vs__dropdown-option--disabled': !selectable(option),
           }"
-          :aria-selected="index === typeAheadPointer ? true : null"
+          :aria-selected="isOptionSelected(option) ? true : null"
+          :aria-disabled="!selectable(option) ? true : null"
           @mouseover="selectable(option) ? (typeAheadPointer = index) : null"
           @click.prevent.stop="selectable(option) ? select(option) : null"
         >
@@ -831,8 +829,18 @@ export default {
             tabindex: this.tabindex,
             readonly: !this.searchable,
             id: this.inputId,
+            //  `role="combobox"` plus its `aria-expanded`/`aria-controls`/
+            //  `aria-activedescendant` trio all live on this element per
+            //  the current WAI-ARIA APG combobox pattern (ARIA 1.2) — the
+            //  older "compound widget" pattern that split `role="combobox"`
+            //  onto a wrapper element and left the input as a plain
+            //  autocomplete field is deprecated and unreliable with modern
+            //  screen readers (NVDA/JAWS expect the input itself to carry
+            //  the combobox role).
+            role: 'combobox',
+            'aria-expanded': this.dropdownOpen.toString(),
             'aria-autocomplete': 'list',
-            'aria-labelledby': `vs${this.uid}__combobox`,
+            'aria-label': 'Search for option',
             'aria-controls': `vs${this.uid}__listbox`,
             ref: 'search',
             type: 'search',
@@ -1088,8 +1096,20 @@ export default {
      */
     onAfterSelect(option) {
       if (this.closeOnSelect) {
-        this.open = !this.open
-        if (this.searchEl) this.searchEl.blur()
+        //  Deliberately close rather than toggle: `onAfterSelect` should
+        //  always leave the dropdown closed after a selection, regardless
+        //  of `open`'s prior value (a `!this.open` toggle here could
+        //  incorrectly *open* it if select() is ever invoked
+        //  programmatically while already closed).
+        //
+        //  Also deliberately does NOT call `searchEl.blur()` — per the
+        //  WAI-ARIA APG combobox pattern, choosing an option should close
+        //  the popup but leave DOM focus on the combobox itself. Forcing
+        //  a blur here used to strip focus after every select (mouse or
+        //  keyboard), which broke the natural flow of continuing to
+        //  interact with the field (e.g. re-opening with Down Arrow) and
+        //  hurt keyboard/screen-reader UX.
+        this.open = false
       }
 
       if (this.clearSearchOnSelect) {
@@ -1287,12 +1307,18 @@ export default {
 
     /**
      * If there is any text in the search input, remove it.
-     * Otherwise, blur the search input to close the dropdown.
+     * Otherwise, close the dropdown.
+     *
+     * Per the WAI-ARIA APG combobox pattern, Escape closes the popup but
+     * DOM focus remains on the combobox — so this closes `open` directly
+     * instead of blurring `searchEl`. Blurring used to both close the
+     * dropdown *and* strip focus from the input entirely, forcing
+     * keyboard users to re-tab into the field to interact with it again.
      * @return {void}
      */
     onEscape() {
       if (!this.search.length) {
-        if (this.searchEl) this.searchEl.blur()
+        this.open = false
       } else {
         this.search = ''
       }

@@ -67,6 +67,38 @@ describe('Toggling Dropdown', () => {
     expect(Select.vm.open).toEqual(false)
   })
 
+  //  Per the WAI-ARIA APG combobox pattern, choosing an option closes the
+  //  popup but DOM focus should remain on the combobox. onAfterSelect used
+  //  to force `searchEl.blur()` on every selection (mouse or keyboard),
+  //  stripping focus even though the dropdown's own mousedown.prevent
+  //  handler already protects mouse-click selections from a native blur.
+  it('does not blur the search input after a selection closes the dropdown', () => {
+    const Select = selectWithProps({
+      options: ['one', 'two', 'three'],
+    })
+    const spy = vi.spyOn(Select.vm.$refs.search, 'blur')
+
+    Select.vm.open = true
+    Select.vm.select('one')
+
+    expect(Select.vm.open).toEqual(false)
+    expect(spy).not.toHaveBeenCalled()
+  })
+
+  //  onAfterSelect previously did `this.open = !this.open`, which would
+  //  incorrectly *open* the dropdown if select() ran while already closed
+  //  (e.g. a programmatic call). closeOnSelect should always mean closed.
+  it('leaves the dropdown closed after a selection even if it was already closed beforehand', () => {
+    const Select = selectWithProps({
+      options: ['one', 'two', 'three'],
+    })
+
+    Select.vm.open = false
+    Select.vm.select('one')
+
+    expect(Select.vm.open).toEqual(false)
+  })
+
   it('does not close the dropdown when the el is clicked, multiple is true, and closeOnSelect option is false', () => {
     const Select = selectWithProps({
       modelValue: [],
@@ -156,12 +188,24 @@ describe('Toggling Dropdown', () => {
 
   it('will close the dropdown on escape, if search is empty', () => {
     const Select = selectWithProps()
+
+    Select.vm.open = true
+    Select.vm.onEscape()
+
+    expect(Select.vm.open).toEqual(false)
+  })
+
+  //  Per the WAI-ARIA APG combobox pattern, Escape closes the popup but
+  //  DOM focus must remain on the combobox — blurring would force keyboard
+  //  users to re-tab into the field to interact with it again.
+  it('does not blur the search input on escape, so focus stays on the combobox', () => {
+    const Select = selectWithProps()
     const spy = vi.spyOn(Select.vm.$refs.search, 'blur')
 
     Select.vm.open = true
     Select.vm.onEscape()
 
-    expect(spy).toHaveBeenCalled()
+    expect(spy).not.toHaveBeenCalled()
   })
 
   it('should remove existing search text on escape keydown', () => {
