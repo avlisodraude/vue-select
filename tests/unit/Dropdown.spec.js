@@ -1,5 +1,6 @@
 import { it, describe, expect, vi, afterEach } from 'vitest'
-import { selectWithProps } from '@tests/helpers.js'
+import { h } from 'vue'
+import { selectWithProps, mountDefault } from '@tests/helpers.js'
 import OpenIndicator from '@/components/OpenIndicator.vue'
 import VueSelect from '@/components/Select.vue'
 
@@ -232,5 +233,56 @@ describe('Toggling Dropdown', () => {
 
     expect(Select.classes('vs--open')).toBeTruthy()
     expect(Select.find('.vs__dropdown-menu li')).toBeTruthy()
+  })
+
+  //  Regression guard for #1869: "Cannot read properties of null
+  //  (reading 'blur')" inside toggleDropdown, and the same class of
+  //  crash in onAfterSelect / onEscape / maybeDeleteValue. `searchEl`
+  //  does a live `querySelector(searchInputQuerySelector)` whenever a
+  //  custom `search` slot is used, and returns null (not undefined)
+  //  when no element inside `.vs__selected-options` matches the
+  //  selector — e.g. a custom slot input without `type="search"`.
+  describe('searchEl null-safety (#1869)', () => {
+    const nonMatchingSearchSlot = {
+      search: () => h('input', { type: 'text', class: 'vs__search' }),
+    }
+
+    it('searchEl is null when the custom search slot input does not match searchInputQuerySelector', () => {
+      const Select = mountDefault({}, { slots: nonMatchingSearchSlot })
+
+      expect(Select.vm.searchEl).toBeNull()
+    })
+
+    it('toggleDropdown does not throw when searchEl is null', () => {
+      const Select = mountDefault({}, { slots: nonMatchingSearchSlot })
+
+      expect(() =>
+        Select.vm.toggleDropdown(clickEvent(Select.vm.$el))
+      ).not.toThrow()
+    })
+
+    it('onAfterSelect does not throw when searchEl is null and closeOnSelect is true', () => {
+      const Select = mountDefault(
+        { closeOnSelect: true },
+        { slots: nonMatchingSearchSlot }
+      )
+
+      expect(() => Select.vm.onAfterSelect('one')).not.toThrow()
+    })
+
+    it('onEscape does not throw when searchEl is null', () => {
+      const Select = mountDefault({}, { slots: nonMatchingSearchSlot })
+
+      expect(() => Select.vm.onEscape()).not.toThrow()
+    })
+
+    it('maybeDeleteValue does not throw when searchEl is null', () => {
+      const Select = mountDefault(
+        { modelValue: [{ label: 'one' }], multiple: true },
+        { slots: nonMatchingSearchSlot }
+      )
+
+      expect(() => Select.vm.maybeDeleteValue()).not.toThrow()
+    })
   })
 })

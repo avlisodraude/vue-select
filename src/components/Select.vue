@@ -1059,7 +1059,7 @@ export default {
     onAfterSelect(option) {
       if (this.closeOnSelect) {
         this.open = !this.open
-        this.searchEl.blur()
+        if (this.searchEl) this.searchEl.blur()
       }
 
       if (this.clearSearchOnSelect) {
@@ -1111,7 +1111,7 @@ export default {
       ]
 
       if (
-        this.searchEl === undefined ||
+        this.searchEl == null ||
         ignoredButtons
           .filter(Boolean)
           .some((ref) => ref.contains(event.target) || ref === event.target)
@@ -1205,6 +1205,7 @@ export default {
      */
     maybeDeleteValue() {
       if (
+        this.searchEl &&
         !this.searchEl.value.length &&
         this.selectedValue &&
         this.selectedValue.length &&
@@ -1261,7 +1262,7 @@ export default {
      */
     onEscape() {
       if (!this.search.length) {
-        this.searchEl.blur()
+        if (this.searchEl) this.searchEl.blur()
       } else {
         this.search = ''
       }
