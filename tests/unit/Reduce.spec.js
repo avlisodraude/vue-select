@@ -95,7 +95,7 @@ describe('When reduce prop is defined', () => {
       },
     })
 
-    Select.vm.$data._value = ['foo', 'bar']
+    Select.vm.$data.uncontrolledValue = ['foo', 'bar']
 
     Select.vm.deselect('foo')
     expect(Select.vm.selectedValue).toEqual(['bar'])

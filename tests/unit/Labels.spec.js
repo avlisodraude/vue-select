@@ -39,7 +39,7 @@ describe('Labels', () => {
     })
 
     expect(Select.vm.searchPlaceholder).toEqual('foo')
-    Select.vm.$data._value = 'one'
+    Select.vm.$data.uncontrolledValue = 'one'
     expect(Select.vm.searchPlaceholder).not.toBeDefined()
   })
 

@@ -81,7 +81,7 @@ describe('VS - Selecting Values', () => {
       },
     })
 
-    Select.vm.$data._value = [
+    Select.vm.$data.uncontrolledValue = [
       { label: 'This is Foo', value: 'foo' },
       { label: 'This is Bar', value: 'bar' },
     ]
@@ -100,7 +100,7 @@ describe('VS - Selecting Values', () => {
       },
     })
 
-    Select.vm.$data._value = 'foo'
+    Select.vm.$data.uncontrolledValue = 'foo'
 
     Select.vm.deselect('foo')
     expect(Select.vm.selectedValue).toEqual([])
@@ -109,7 +109,7 @@ describe('VS - Selecting Values', () => {
   it('can deselect an option when multiple is false', () => {
     const Select = shallowMount(VueSelect)
 
-    Select.vm.$data._value = 'foo'
+    Select.vm.$data.uncontrolledValue = 'foo'
 
     Select.vm.deselect('foo')
     expect(Select.vm.selectedValue).toEqual([])

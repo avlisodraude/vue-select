@@ -695,13 +695,29 @@ export default {
       open: false,
       isComposing: false,
       pushedTags: [],
-      // eslint-disable-next-line vue/no-reserved-keys
-      _value: [], // Internal value managed by Vue Select if no `value` prop is passed
+      /**
+       * Local source of truth, used ONLY when this component is fully
+       * uncontrolled (no `model-value`/`v-model` bound at all). When a
+       * `model-value` is bound, the selection is derived purely from
+       * props via `resolvedValue` below instead of duplicating state
+       * here — see the controlled-component pattern notes on that
+       * computed.
+       */
+      uncontrolledValue: [],
       deselectButtons: [],
     }
   },
 
   computed: {
+    /**
+     * True when a `model-value` has been bound at all, i.e. this
+     * component's selection is (at least partly) owned by the parent.
+     * @return {boolean}
+     */
+    isControlled() {
+      return typeof this.modelValue !== 'undefined'
+    },
+
     isReducingValues() {
       return this.$props.reduce !== this.$options.props.reduce.default
     },
@@ -709,10 +725,54 @@ export default {
     /**
      * Determine if the component needs to
      * track the state of values internally.
+     * @deprecated kept for backwards compatibility — prefer `isControlled`.
      * @return {boolean}
      */
     isTrackingValues() {
-      return typeof this.modelValue === 'undefined' || this.isReducingValues
+      return !this.isControlled || this.isReducingValues
+    },
+
+    /**
+     * Resolve `modelValue` into the actual option object(s) it
+     * represents.
+     *
+     * This is the core of the controlled-component pattern: rather than
+     * mutating an internal copy of the value in response to `modelValue`/
+     * `options` watchers (the old approach, which was prone to staleness
+     * and double-tracking bugs), the resolved value is derived fresh,
+     * on demand, from current props every time. Vue's computed caching
+     * means this only re-runs when a real dependency actually changes.
+     *
+     * - Fully controlled, no `reduce`: the prop *is* the value, return
+     *   it directly — zero internal state involved.
+     * - Controlled + `reduce`: `reduce()` can't generally be inverted,
+     *   so the matching option object has to be looked up in `options`/
+     *   `pushedTags` each time.
+     * - Uncontrolled (no `model-value` bound): there's nothing to
+     *   derive from, so the component has to own its own value — this
+     *   is the one legitimate case for internal state.
+     *
+     * @return {*}
+     */
+    resolvedValue() {
+      if (!this.isControlled) {
+        return this.uncontrolledValue
+      }
+
+      if (!this.isReducingValues) {
+        return this.modelValue
+      }
+
+      const resolved = Array.isArray(this.modelValue)
+        ? this.modelValue.map((val) => this.findOptionFromReducedValue(val))
+        : this.findOptionFromReducedValue(this.modelValue)
+
+      // Bookkeeping only, for the reduce-collision tie-break in
+      // `findOptionFromReducedValue` — not part of the reactive value
+      // model, so it's a plain instance property rather than `data()`.
+      this._lastResolvedValue = resolved
+
+      return resolved
     },
 
     /**
@@ -720,11 +780,7 @@ export default {
      * @return {Array}
      */
     selectedValue() {
-      let value = this.modelValue
-      if (this.isTrackingValues) {
-        // Vue select has to manage value internally
-        value = this.$data._value
-      }
+      let value = this.resolvedValue
 
       if (value !== undefined && value !== null && value !== '') {
         return [].concat(value)
@@ -947,22 +1003,9 @@ export default {
         this.clearSelection()
       }
 
-      if (this.modelValue && this.isTrackingValues) {
-        this.setInternalValueFromOptions(this.modelValue)
-      }
-    },
-
-    /**
-     * Make sure to update internal
-     * value if prop changes outside
-     */
-    modelValue: {
-      immediate: true,
-      handler(val) {
-        if (this.isTrackingValues) {
-          this.setInternalValueFromOptions(val)
-        }
-      },
+      // No manual re-sync needed here: when controlled + reducing,
+      // `resolvedValue` already depends on `options` and recomputes
+      // itself automatically.
     },
 
     /**
@@ -981,25 +1024,12 @@ export default {
 
   created() {
     this.mutableLoading = this.loading
+    // See `resolvedValue`/`findOptionFromReducedValue` — bookkeeping-only,
+    // not reactive state.
+    this._lastResolvedValue = null
   },
 
   methods: {
-    /**
-     * Make sure tracked value is
-     * one option if possible.
-     * @param  {Object|String} value
-     * @return {void}
-     */
-    setInternalValueFromOptions(value) {
-      if (Array.isArray(value)) {
-        this.$data._value = value.map((val) =>
-          this.findOptionFromReducedValue(val)
-        )
-      } else {
-        this.$data._value = this.findOptionFromReducedValue(value)
-      }
-    },
-
     /**
      * Select or deselect a given option.
      * Allow deselect if clearable or if not the only selected option.
@@ -1076,9 +1106,9 @@ export default {
      * @param value
      */
     updateValue(value) {
-      if (typeof this.modelValue === 'undefined') {
-        // Vue select has to manage value
-        this.$data._value = value
+      if (!this.isControlled) {
+        // Uncontrolled: this component IS the source of truth.
+        this.uncontrolledValue = value
       }
 
       if (value !== null) {
@@ -1183,7 +1213,7 @@ export default {
        */
       return (
         matches.find((match) =>
-          this.optionComparator(match, this.$data._value)
+          this.optionComparator(match, this._lastResolvedValue)
         ) || value
       )
     },

@@ -9,7 +9,7 @@ describe('Reset on options change', () => {
       props: { options: ['one'] },
     })
 
-    Select.vm.$data._value = 'one'
+    Select.vm.$data.uncontrolledValue = 'one'
 
     await Select.setProps({ options: ['four', 'five', 'six'] })
     expect(Select.vm.selectedValue).toEqual(['one'])
@@ -109,7 +109,7 @@ describe('Reset on options change', () => {
       props: { resetOnOptionsChange: true, options: ['one'] },
     })
 
-    Select.vm.$data._value = 'one'
+    Select.vm.$data.uncontrolledValue = 'one'
 
     await Select.setProps({ options: ['four', 'five', 'six'] })
 

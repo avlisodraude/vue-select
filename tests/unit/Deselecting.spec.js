@@ -4,7 +4,7 @@ import { mountDefault, selectWithProps } from '@tests/helpers.js'
 describe('Removing values', () => {
   it('can remove the given tag when its close icon is clicked', async () => {
     const Select = selectWithProps({ multiple: true })
-    Select.vm.$data._value = 'one'
+    Select.vm.$data.uncontrolledValue = 'one'
     await Select.vm.$nextTick()
 
     Select.find('.vs__deselect').trigger('click')
@@ -30,7 +30,7 @@ describe('Removing values', () => {
       options: ['one', 'two', 'three'],
     })
 
-    Select.vm.$data._value = ['one', 'two']
+    Select.vm.$data.uncontrolledValue = ['one', 'two']
 
     Select.find('.vs__search').trigger('keydown.backspace')
 
@@ -43,7 +43,7 @@ describe('Removing values', () => {
       options: ['one', 'two', 'three'],
     })
 
-    Select.vm.$data._value = 'one'
+    Select.vm.$data.uncontrolledValue = 'one'
 
     Select.vm.maybeDeleteValue()
     expect(Select.vm.selectedValue).toEqual([])
@@ -51,7 +51,7 @@ describe('Removing values', () => {
 
   it('will not emit update:modelValue event if value has not changed with backspace', () => {
     const Select = mountDefault()
-    Select.vm.$data._value = 'one'
+    Select.vm.$data.uncontrolledValue = 'one'
     Select.get('input').trigger('keydown.backspace')
     expect(Select.emitted()['update:modelValue'].length).toBe(1)
 
@@ -136,7 +136,7 @@ describe('Removing values', () => {
       const Select = selectWithProps({
         options: ['foo', 'bar'],
       })
-      Select.vm.$data._value = 'foo'
+      Select.vm.$data.uncontrolledValue = 'foo'
 
       expect(Select.vm.selectedValue).toEqual(['foo'])
       Select.find('button.vs__clear').trigger('click')
