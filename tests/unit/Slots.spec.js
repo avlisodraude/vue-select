@@ -52,6 +52,105 @@ describe('Scoped Slots', () => {
     })
   })
 
+  describe('Slot: clear', () => {
+    it('renders the default clear button when the slot is not provided', () => {
+      const Select = mountDefault({ modelValue: 'one' })
+      expect(Select.find('.vs__clear').exists()).toEqual(true)
+    })
+
+    it('default clear button registers its ref and clears on click', async () => {
+      const Select = mountDefault({ modelValue: 'one' })
+
+      //  `ref`/`onClick` now come from `scope.clear.attributes`; make sure
+      //  binding them via `v-bind` still wires the ref (used by
+      //  `toggleDropdown`) and the click handler.
+      expect(Select.vm.$refs.clearButton).toBeTruthy()
+
+      await Select.get('.vs__clear').trigger('click')
+      expect(Select.emitted('update:modelValue')[0]).toEqual([null])
+    })
+
+    it('replaces the clear button with custom content', () => {
+      const Select = mountDefault(
+        { modelValue: 'one' },
+        {
+          slots: {
+            clear: (slotProps) =>
+              h(
+                'button',
+                { class: 'my-clear', onClick: slotProps.clearSelection },
+                'x'
+              ),
+          },
+        }
+      )
+
+      expect(Select.find('.vs__clear').exists()).toEqual(false)
+      expect(Select.get('.my-clear').text()).toEqual('x')
+    })
+
+    it('exposes clear state and a clearSelection function to the slot', () => {
+      const clear = vi.fn()
+      mountDefault({ modelValue: 'one' }, { slots: { clear } })
+
+      const slotProps = clear.mock.calls[0][0]
+      expect(slotProps.canClear).toEqual(true)
+      expect(typeof slotProps.clearSelection).toEqual('function')
+    })
+
+    it('clears the selection when the slotted clearSelection is called', async () => {
+      const Select = mountDefault(
+        { modelValue: 'one' },
+        {
+          slots: {
+            clear: (slotProps) =>
+              h('button', {
+                class: 'my-clear',
+                onClick: slotProps.clearSelection,
+              }),
+          },
+        }
+      )
+
+      await Select.get('.my-clear').trigger('click')
+      expect(Select.emitted('update:modelValue')[0]).toEqual([null])
+    })
+  })
+
+  describe('Slot: deselect', () => {
+    it('customizes the per-tag deselect button in multiple mode', () => {
+      const Select = mountDefault(
+        { multiple: true, modelValue: ['one'] },
+        {
+          slots: {
+            deselect: (slotProps) =>
+              h('span', { class: 'my-deselect' }, slotProps.option.label),
+          },
+        }
+      )
+
+      expect(Select.get('.my-deselect').text()).toEqual('one')
+    })
+
+    it('deselects the option when the slotted deselect is called', async () => {
+      const Select = mountDefault(
+        { multiple: true, modelValue: ['one', 'two'] },
+        {
+          slots: {
+            deselect: (slotProps) =>
+              h('span', {
+                class: 'my-deselect',
+                onClick: () => slotProps.deselect(),
+              }),
+          },
+        }
+      )
+
+      await Select.get('.my-deselect').trigger('click')
+      expect(Select.emitted('update:modelValue')[0]).toEqual([['two']])
+    })
+  })
+
   it('receives an option object to the option slot in the dropdown menu', async () => {
     const Select = mountDefault(
       { modelValue: 'one' },
