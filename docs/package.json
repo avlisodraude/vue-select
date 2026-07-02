@@ -8,8 +8,8 @@
     "build:preview": "cross-env DEPLOY_PREVIEW=true vuepress build"
   },
   "devDependencies": {
+    "@floating-ui/dom": "^1.6.0",
     "@octokit/graphql": "^4.3.1",
-    "@popperjs/core": "^2.1.0",
     "@vuepress/plugin-active-header-links": "^1.4.0",
     "@vuepress/plugin-google-analytics": "^1.4.0",
     "@vuepress/plugin-nprogress": "^1.4.0",

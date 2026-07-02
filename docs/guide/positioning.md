@@ -17,17 +17,19 @@ When `appendToBody` is true, the positioning will be handled by the `calculatePo
 function is responsible for setting top/left absolute positioning values for the dropdown. The
 default implementation places the dropdown in the same position that it would normally appear.
 
-## Popper.js Integration <Badge text="v3.7.0+" />
+## Floating UI Integration <Badge text="v3.7.0+" />
 
-[Popper.js](https://popper.js.org/) is an awesome, 3kb utility for calculating positions of just
-about any DOM element relative to another.
+[Floating UI](https://floating-ui.com/) is a small, low-level library for positioning floating
+elements (dropdowns, tooltips, popovers) relative to another element. It flips the dropdown near
+viewport edges, keeps it anchored to the toggle on scroll and resize, and works correctly inside
+scrollable containers.
 
 By using the `appendToBody` and `calculatePosition` props, we're able to integrate directly with
-popper to calculate positioning for us.
+Floating UI to calculate positioning for us.
 
-<PositionedWithPopper />
+<PositionedWithFloatingUI />
 
-Check out the [Popper Docs](https://popper.js.org/docs/v2/modifiers/) to see the full `modifiers`
-API being used below.
+Check out the [Floating UI middleware docs](https://floating-ui.com/docs/middleware) to see the
+`flip`, `shift`, and `offset` middleware being used below.
 
-<<< @/.vuepress/components/PositionedWithPopper.vue{25-59}
+<<< @/.vuepress/components/PositionedWithFloatingUI.vue{25-71}
