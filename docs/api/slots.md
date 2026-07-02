@@ -18,6 +18,38 @@ Slots can be used to change the look and feel of the UI, or to simply swap out t
 
 <div class="slot-docs">
 
+## `clear`
+
+The clear button rendered in the actions area of a single select, used to reset the selection.
+Follows the same convention as `open-indicator` and `spinner`.
+
+- `attributes {Object}` - bind to your button (`v-bind="attributes"`) to inherit the default
+  `vs__clear` class, `ref`, `disabled` state and click handler
+- `canClear {Boolean}` - whether the clear button would normally be displayed
+- `clearSelection {Function}` - clears the current selection
+
+```vue
+<template #clear="{ canClear, clearSelection }">
+  <button v-show="canClear" type="button" title="Clear" @click="clearSelection">✕</button>
+</template>
+```
+
+## `deselect`
+
+The per-item deselect control shown on each selected tag when `multiple` is true. Vue Select renders
+the accessible `<button>` wrapper for you; this slot replaces its contents (by default the `Deselect`
+icon).
+
+- `option {Object}` - the selected option this control belongs to
+- `deselect {Function}` - deselects this option (pre-bound; call with no arguments)
+- `disabled {Boolean}` - whether the component is disabled
+
+```vue
+<template #deselect="{ option }">
+  <span aria-hidden="true">×</span>
+</template>
+```
+
 ## `footer` <Badge text="3.8.0+" />
 
 Displayed at the bottom of the component, below `.vs__dropdown-toggle`.
@@ -169,6 +201,13 @@ This slot doesn't exist if `selected-option-container` is implemented.
 This is the root element where `v-for="option in selectedValue"`. Most of the time you'll want to
 use `selected-option`, but this container is useful if you want to disable the deselect button,
 or have fine grain control over the markup.
+
+::: tip
+This is also the slot to reach for if you want to fully customize how selected items are
+displayed in `multiple` mode ([#1863](https://github.com/sagalbot/vue-select/issues/1863)) — it
+already receives `option`, `deselect`, `disabled`, and `multiple`, so no separate slot was needed
+for that.
+:::
 
 - `option {Object}` - Currently iterated selected option
 - `deselect {Function}` - Method used to deselect a given option when `multiple` is true

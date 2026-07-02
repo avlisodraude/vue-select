@@ -329,4 +329,48 @@ describe('Toggling Dropdown', () => {
       expect(() => Select.vm.maybeDeleteValue()).not.toThrow()
     })
   })
+
+  describe('Public instance methods (#1860)', () => {
+    it('openDropdown() opens the dropdown', () => {
+      const Select = selectWithProps()
+      Select.vm.openDropdown()
+      expect(Select.vm.open).toEqual(true)
+    })
+
+    it('openDropdown() does nothing when disabled', () => {
+      const Select = selectWithProps({ disabled: true })
+      Select.vm.openDropdown()
+      expect(Select.vm.open).toEqual(false)
+    })
+
+    it('closeDropdown() closes the dropdown', () => {
+      const Select = selectWithProps()
+      Select.vm.open = true
+      Select.vm.closeDropdown()
+      expect(Select.vm.open).toEqual(false)
+    })
+
+    //  Matches the WAI-ARIA APG fix applied to onEscape/onAfterSelect in the
+    //  accessibility session: closing the popup must not strip DOM focus.
+    it('closeDropdown() does not blur the search input', () => {
+      const Select = selectWithProps()
+      const spy = vi.spyOn(Select.vm.$refs.search, 'blur')
+
+      Select.vm.open = true
+      Select.vm.closeDropdown()
+
+      expect(spy).not.toHaveBeenCalled()
+    })
+
+    it('toggleDropdown() with no event toggles the open state', () => {
+      const Select = selectWithProps()
+      expect(Select.vm.open).toEqual(false)
+
+      Select.vm.toggleDropdown()
+      expect(Select.vm.open).toEqual(true)
+
+      Select.vm.toggleDropdown()
+      expect(Select.vm.open).toEqual(false)
+    })
+  })
 })

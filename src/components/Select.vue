@@ -37,7 +37,14 @@
               :aria-label="`Deselect ${getOptionLabel(option)}`"
               @click="deselect(option)"
             >
-              <component :is="childComponents.Deselect" />
+              <slot
+                name="deselect"
+                :option="normalizeOptionForSlot(option)"
+                :deselect="() => deselect(option)"
+                :disabled="disabled"
+              >
+                <component :is="childComponents.Deselect" />
+              </slot>
             </button>
           </span>
         </slot>
@@ -52,18 +59,11 @@
       </div>
 
       <div ref="actions" class="vs__actions">
-        <button
-          v-show="showClearButton"
-          ref="clearButton"
-          :disabled="disabled"
-          type="button"
-          class="vs__clear"
-          title="Clear Selected"
-          aria-label="Clear Selected"
-          @click="clearSelection"
-        >
-          <component :is="childComponents.Deselect" />
-        </button>
+        <slot name="clear" v-bind="scope.clear">
+          <button v-show="showClearButton" v-bind="scope.clear.attributes">
+            <component :is="childComponents.Deselect" />
+          </button>
+        </slot>
 
         <slot name="open-indicator" v-bind="scope.openIndicator">
           <component
@@ -166,7 +166,7 @@ export default {
   directives: { appendToBody },
 
   mixins: [pointerScroll, typeAheadPointer, ajax],
-  
+
   compatConfig: {
     MODE: 3,
   },
@@ -832,7 +832,7 @@ export default {
      * @return {Array}
      */
     selectedValue() {
-      let value = this.resolvedValue
+      const value = this.resolvedValue
 
       if (value !== undefined && value !== null && value !== '') {
         return [].concat(value)
@@ -929,6 +929,25 @@ export default {
             role: 'presentation',
             class: 'vs__open-indicator',
           },
+        },
+        clear: {
+          //  Bind these to the clear button, exactly like `open-indicator`.
+          //  `ref` keeps `toggleDropdown`'s ignore-list working and `onClick`
+          //  wires up clearing, so a custom button only needs a single
+          //  `v-bind="attributes"` to behave like the default.
+          attributes: {
+            ref: 'clearButton',
+            disabled: this.disabled,
+            type: 'button',
+            class: 'vs__clear',
+            title: 'Clear Selected',
+            'aria-label': 'Clear Selected',
+            onClick: this.clearSelection,
+          },
+          //  Whether the default button would render — use it to `v-show`/
+          //  `v-if` a fully custom control.
+          canClear: this.showClearButton,
+          clearSelection: this.clearSelection,
         },
         listHeader: listSlot,
         listFooter: listSlot,
@@ -1324,10 +1343,21 @@ export default {
 
     /**
      * Toggle the visibility of the dropdown menu.
-     * @param  {Event} event
+     *
+     * Doubles as a public instance method: call it with no argument via a
+     * template ref to toggle the dropdown programmatically. With an event
+     * (the default, from the toggle's `mousedown`) it keeps the original
+     * pointer-driven behaviour.
+     *
+     * @see https://github.com/sagalbot/vue-select/issues/1860
+     * @param  {Event} [event]
      * @return {void}
      */
     toggleDropdown(event) {
+      if (!event) {
+        return this.open ? this.closeDropdown() : this.openDropdown()
+      }
+
       const targetIsNotSearch = event.target !== this.searchEl
       if (targetIsNotSearch) {
         event.preventDefault()
@@ -1356,6 +1386,42 @@ export default {
         this.open = true
         this.searchEl.focus()
       }
+    },
+
+    /**
+     * Open the dropdown menu programmatically.
+     *
+     * Public instance method, intended to be called via a template ref so a
+     * parent can control the dropdown (e.g. `this.$refs.select.openDropdown()`).
+     * Named `openDropdown`/`closeDropdown` rather than the more idiomatic
+     * `open`/`close` because `open` is already the internal state flag (and
+     * part of the public `dropdownShouldOpen` contract), so a method of the
+     * same name would collide with it.
+     *
+     * @see https://github.com/sagalbot/vue-select/issues/1860
+     * @return {void}
+     */
+    openDropdown() {
+      if (this.disabled) return
+      this.open = true
+      if (this.searchEl) this.searchEl.focus()
+    },
+
+    /**
+     * Close the dropdown menu programmatically.
+     *
+     * Public instance method — the counterpart to `openDropdown`. Deliberately
+     * does NOT blur `searchEl`: per the WAI-ARIA APG combobox pattern (and
+     * matching `onEscape`/`onAfterSelect`, fixed the same way in the
+     * accessibility session), closing the popup should not strip DOM focus
+     * away from wherever it currently is. A consumer calling this via a
+     * template ref is closing the popup, not necessarily blurring the field.
+     *
+     * @see https://github.com/sagalbot/vue-select/issues/1860
+     * @return {void}
+     */
+    closeDropdown() {
+      this.open = false
     },
 
     /**
