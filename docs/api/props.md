@@ -605,3 +605,41 @@ value: {
 	default: null
 },
 ```
+
+## virtualScroll <Badge text="experimental" type="warning" />
+
+::: warning EXPERIMENTAL
+Virtual scrolling is an early, opt-in foundation and its API may
+change. It currently assumes a **fixed row height** (see
+[`virtualScrollRowHeight`](#virtualscrollrowheight)) and does not yet
+fully account for variable-height rows, grouped options, or perfect
+keyboard-autoscroll alignment. Enable it only if you have a very large
+option list and have verified it behaves for your use case.
+:::
+
+When `true`, the dropdown only renders the options currently within the
+scroll viewport (plus a small buffer) instead of one element per option.
+This keeps the DOM small — and rendering fast — for lists with thousands
+of options. Spacer elements above and below the rendered window preserve
+the scrollbar so the list still scrolls through every option.
+
+```js
+virtualScroll: {
+	type: Boolean,
+	default: false
+},
+```
+
+## virtualScrollRowHeight <Badge text="experimental" type="warning" />
+
+The assumed height, in pixels, of a single option row. Only used when
+[`virtualScroll`](#virtualscroll) is enabled, to calculate which rows
+fall inside the viewport. Your option rows must render at this height for
+the windowing math to line up.
+
+```js
+virtualScrollRowHeight: {
+	type: Number,
+	default: 40
+},
+```
