@@ -3,22 +3,22 @@
 Install with yarn or npm:
 
 ```bash
-# vue 2
+# vue 2 (original vue-select, not this fork)
 yarn add vue-select
 
-# vue 3
-yarn add vue-select@beta
+# vue 3 (this fork)
+yarn add @alosha/vue-select
 
 # or, using NPM
-npm install vue-select
+npm install @alosha/vue-select
 ```
 
-Then, import and register the component. On Vue 3 (vue-select `4.x`), register it on the app
+Then, import and register the component. On Vue 3 (`4.x`), register it on the app
 instance created by `createApp`:
 
 ```js
 import { createApp } from 'vue'
-import vSelect from 'vue-select'
+import vSelect from '@alosha/vue-select'
 import App from './App.vue'
 
 const app = createApp(App)
@@ -29,7 +29,7 @@ app.mount('#app')
 The component itself does not include any CSS. You'll need to include it separately:
 
 ```js
-import 'vue-select/dist/vue-select.css';
+import '@alosha/vue-select/dist/vue-select.css';
 ```
 
 ## In the Browser
@@ -42,9 +42,9 @@ vue-select JS & vue-select CSS.
 <!-- include Vue 3 first -->
 <script src="https://unpkg.com/vue@3"></script>
 
-<!-- the Vue 3 (beta) vue-select release -->
-<script src="https://unpkg.com/vue-select@beta"></script>
-<link rel="stylesheet" href="https://unpkg.com/vue-select@beta/dist/vue-select.css">
+<!-- the Vue 3 vue-select release -->
+<script src="https://unpkg.com/@alosha/vue-select"></script>
+<link rel="stylesheet" href="https://unpkg.com/@alosha/vue-select/dist/vue-select.css">
 ```
 
 Then create your app and register the component from the global:
@@ -59,5 +59,5 @@ Vue.createApp({
 
 ## Vue Compatibility
 
-- Vue `2.x`, use vue-select `3.x`.
-- Vue `3.x`, use vue-select `4.x` (currently published under the `beta` tag).
+- Vue `2.x`, use the original `vue-select` `3.x` from [sagalbot/vue-select](https://github.com/sagalbot/vue-select).
+- Vue `3.x`, use `@alosha/vue-select` `4.x`.

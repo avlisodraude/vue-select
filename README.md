@@ -1,4 +1,10 @@
-# vue-select ![Current Release](https://img.shields.io/github/release/sagalbot/vue-select.svg?style=flat-square) ![Release Date](https://img.shields.io/github/release-date/sagalbot/vue-select?style=flat-square) ![Bundle Size](https://flat.badgen.net/bundlephobia/min/vue-select) ![Monthly Downloads](https://img.shields.io/npm/dm/vue-select.svg?style=flat-square) [![Coverage Status](https://coveralls.io/repos/github/sagalbot/vue-select/badge.svg?branch=master)](https://coveralls.io/github/sagalbot/vue-select?branch=master) ![MIT License](https://img.shields.io/github/license/sagalbot/vue-select.svg?style=flat-square)
+# @alosha/vue-select ![Current Release](https://img.shields.io/github/package-json/v/avlisodraude/vue-select?style=flat-square) ![Release Date](https://img.shields.io/github/release-date/avlisodraude/vue-select?style=flat-square) ![Bundle Size](https://flat.badgen.net/bundlephobia/min/@alosha/vue-select) ![Monthly Downloads](https://img.shields.io/npm/dm/@alosha/vue-select.svg?style=flat-square) ![MIT License](https://img.shields.io/github/license/avlisodraude/vue-select.svg?style=flat-square)
+
+> A maintained Vue 3 fork of [sagalbot/vue-select](https://github.com/sagalbot/vue-select) — the
+> original Vue 3 line had been stuck on a beta tag since late 2022. This fork fixes the outstanding
+> crashes, ships a controlled-component refactor, a full accessibility pass, floating-ui positioning,
+> and native TypeScript types, and cuts it as a real `4.0.0` stable release. Full MIT attribution to
+> the original author is preserved — see [CHANGELOG.md](./CHANGELOG.md) for what changed and why.
 
 > **Everything you wish the HTML `<select>` element could do, wrapped up into a lightweight, zero
 > dependency, extensible Vue component.**
@@ -21,33 +27,34 @@ developer experience, and customization.
 - Customizable with slots and SCSS variables
 - Zero dependencies
 
-> **Using Vue 2?** This is the Vue 3 line (`4.x`). For Vue 2, install vue-select `3.x`. Coming from
-> the Vue 2 version? See the [v3 → v4 migration guide](https://vue-select.org/guide/migration.html) —
-> the public API is unchanged; only registration and a few accessibility behaviors differ.
+> **Using Vue 2?** This is the Vue 3 line (`4.x`). For Vue 2, install the original `vue-select@3.x`
+> from [sagalbot/vue-select](https://github.com/sagalbot/vue-select). Coming from that Vue 2 version?
+> See the [v3 → v4 migration guide](./docs/guide/migration.md) — the public API is unchanged; only
+> registration and a few accessibility behaviors differ.
 
 ## Documentation
 
-Complete documentation and examples available at https://vue-select.org.
+Full guides live in [`docs/guide`](./docs/guide) in this repo (a hosted docs site is on the roadmap).
 
-- **[API Documentation](https://vue-select.org)**
-- **[Live demo & sandbox](https://vue-select.org/sandbox)**
+- **[Install & registration](./docs/guide/install.md)**
+- **[v3 → v4 migration guide](./docs/guide/migration.md)**
 - **[Vue 3 starter template](#vue-3-starter-template)** (see below)
 
-## Sponsors :tada:
+## Credits
 
-It takes a lot of effort to maintain this project. If it has saved you development time, please consider [sponsoring the project](https://github.com/sponsors/sagalbot)
-with GitHub sponsors!
-
-Huge thanks to the [sponsors](https://github.com/sponsors/sagalbot) and [contributors](https://github.com/sagalbot/vue-select/graphs/contributors) that make Vue Select possible!
+This fork builds directly on the work of [Jeff Sagal](https://github.com/sagalbot) and every
+[contributor to the original project](https://github.com/sagalbot/vue-select/graphs/contributors) —
+if the original component has saved you development time over the years, consider
+[sponsoring Jeff](https://github.com/sponsors/sagalbot).
 
 ## Install
 
 ```bash
 # Vue 3 (this line):
-yarn add vue-select@beta
+yarn add @alosha/vue-select
 
 # or use npm
-npm install vue-select@beta
+npm install @alosha/vue-select
 ```
 
 Then, import and register the component. Vue 3 removed the global `Vue` object, so registration
@@ -55,8 +62,8 @@ happens on the app instance:
 
 ```js
 import { createApp } from "vue";
-import vSelect from "vue-select";
-import "vue-select/dist/vue-select.css";
+import vSelect from "@alosha/vue-select";
+import "@alosha/vue-select/dist/vue-select.css";
 import App from "./App.vue";
 
 const app = createApp(App);
@@ -67,17 +74,17 @@ app.mount("#app");
 The component itself does not include any CSS. You'll need to include it separately:
 
 ```js
-import "vue-select/dist/vue-select.css";
+import "@alosha/vue-select/dist/vue-select.css";
 ```
 
 Alternatively, you can import the scss for complete control of the component styles:
 
 ```scss
-@import "vue-select/src/scss/vue-select.scss";
+@import "@alosha/vue-select/src/scss/vue-select.scss";
 ```
 
 You can also include vue-select directly in the browser. Check out the
-[documentation for loading from CDN.](https://vue-select.org/guide/install.html#in-the-browser).
+[documentation for loading from CDN.](./docs/guide/install.md#in-the-browser).
 
 ## TypeScript
 
@@ -99,14 +106,14 @@ import type {
   VueSelectProps, // the full public props interface
   VueSelectInstance, // the component instance (what a template ref resolves to)
   VueSelectOption, // string | number | Record<string, any>
-} from "vue-select";
+} from "@alosha/vue-select";
 ```
 
 `VueSelectInstance` is handy for typing a template ref so the exposed methods below are typed:
 
 ```ts
 import { ref } from "vue";
-import type { VueSelectInstance } from "vue-select";
+import type { VueSelectInstance } from "@alosha/vue-select";
 
 const select = ref<VueSelectInstance>();
 // select.value?.openDropdown()
@@ -139,9 +146,8 @@ and a nested `options` array:
 
 ## Customization
 
-Vue Select uses scoped slots for total control over the presentation layer. Full documentation
-lives at [vue-select.org](https://vue-select.org/api/slots.html); a few recent additions are shown
-below.
+Vue Select uses scoped slots for total control over the presentation layer. A few recent additions
+are shown below.
 
 ### `clear` slot
 
@@ -220,8 +226,7 @@ your options are anything richer than plain data.
 ### Customizing the whole selected value area
 
 There is no dedicated slot to replace the selected value *and* its clear button together — use the
-pre-existing [`selected-option-container` slot](https://vue-select.org/api/slots.html#selected-option-container),
-which wraps each selected option and lets you take full control of that region (e.g. to hide the
+pre-existing `selected-option-container` slot, which wraps each selected option and lets you take full control of that region (e.g. to hide the
 per-item deselect button). Use the `selected-option` slot instead if you only want to change the text.
 
 ### Virtual scrolling (experimental)
@@ -241,7 +246,7 @@ For very large option lists you can opt into DOM windowing so only the visible r
 
 The public prop/event/slot API is **unchanged** from `3.x`. The differences are Vue 3 registration
 (`createApp`) and a handful of accessibility behaviors. See the full
-**[v3 → v4 migration guide](https://vue-select.org/guide/migration.html)**.
+**[v3 → v4 migration guide](./docs/guide/migration.md)**.
 
 ## Vue 3 starter template
 
@@ -253,8 +258,8 @@ file) — current Vue 3 best practice using `createApp` and the browser (UMD) bu
 <html>
   <head>
     <script src="https://unpkg.com/vue@3"></script>
-    <script src="https://unpkg.com/vue-select@beta"></script>
-    <link rel="stylesheet" href="https://unpkg.com/vue-select@beta/dist/vue-select.css" />
+    <script src="https://unpkg.com/@alosha/vue-select"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@alosha/vue-select/dist/vue-select.css" />
   </head>
   <body>
     <div id="app" style="max-width: 20rem; margin: 4rem auto">
@@ -282,4 +287,4 @@ file) — current Vue 3 best practice using `createApp` and the browser (UMD) bu
 
 ## License
 
-[MIT](https://github.com/sagalbot/vue-select/blob/master/LICENSE.md)
+[MIT](./LICENSE.md)

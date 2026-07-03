@@ -1,9 +1,12 @@
 {
-    "name": "vue-select",
-    "version": "4.0.0-beta.6",
+    "name": "@alosha/vue-select",
+    "version": "4.0.0",
     "description": "Everything you wish the HTML <select> element could do, wrapped up into a lightweight, extensible Vue component.",
     "author": "Jeff Sagal <sagalbot@gmail.com>",
-    "homepage": "https://vue-select.org",
+    "contributors": [
+        "Eduardo Silva Navarrete (Alosha) <https://github.com/avlisodraude>"
+    ],
+    "homepage": "https://github.com/avlisodraude/vue-select",
     "directories": {
         "doc": "docs",
         "test": "tests"
@@ -47,7 +50,10 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/sagalbot/vue-select.git"
+        "url": "https://github.com/avlisodraude/vue-select.git"
+    },
+    "bugs": {
+        "url": "https://github.com/avlisodraude/vue-select/issues"
     },
     "peerDependencies": {
         "vue": "3.x"

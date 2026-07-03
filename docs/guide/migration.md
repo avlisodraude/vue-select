@@ -15,8 +15,9 @@ If you're still on Vue 2 and moving from vue-select `2.x` to `3.x`, you want the
 - **The public prop/event/slot API is unchanged.** The big internal refactor in this line did not
   touch the API surface. `v-model`, `options`, `label`, `reduce`, `multiple`, `@search`, `@option:*`,
   every slot — all identical to `3.x`.
-- **Vue 3 is now a peer dependency.** You install `vue-select@4` (currently published under the
-  `beta` tag) and register it with `createApp` instead of the global `Vue` object.
+- **Vue 3 is now a peer dependency.** You install `@alosha/vue-select` `4.x` (this fork's package
+  name — see the note on package naming below) and register it with `createApp` instead of the
+  global `Vue` object.
 - **A few accessibility behaviors changed** (focus handling, ARIA roles/attributes). These are the
   only runtime differences most apps will notice, and only if you assert on them in tests or custom
   focus logic.
@@ -28,15 +29,15 @@ The only required code change for a typical app is how you register the componen
 global `Vue` object, so the `Vue.component()` call becomes a `createApp(...).component()` call.
 
 ```bash
-# Vue 2 → vue-select 3.x
+# Vue 2 → original vue-select 3.x
 yarn add vue-select
 
-# Vue 3 → vue-select 4.x
-yarn add vue-select@beta
+# Vue 3 → this fork, @alosha/vue-select 4.x
+yarn add @alosha/vue-select
 ```
 
 ```js
-// v3 (Vue 2)
+// v3 (Vue 2, original package)
 import Vue from 'vue'
 import vSelect from 'vue-select'
 import 'vue-select/dist/vue-select.css'
@@ -45,10 +46,10 @@ Vue.component('v-select', vSelect)
 ```
 
 ```js
-// v4 (Vue 3)
+// v4 (Vue 3, this fork)
 import { createApp } from 'vue'
-import vSelect from 'vue-select'
-import 'vue-select/dist/vue-select.css'
+import vSelect from '@alosha/vue-select'
+import '@alosha/vue-select/dist/vue-select.css'
 import App from './App.vue'
 
 const app = createApp(App)
@@ -56,8 +57,15 @@ app.component('v-select', vSelect)
 app.mount('#app')
 ```
 
+> **Why `@alosha/vue-select` and not `vue-select@4`?** This fork publishes under a new scoped
+> package name rather than the original unscoped `vue-select`, since that name is owned by the
+> original maintainer and this project doesn't have publish rights to it. The component itself,
+> its API, and its behavior continue directly from the original v4 beta line — only the npm
+> package identity differs.
+
 The CSS import is unchanged. As before, you can import the SCSS source
-(`vue-select/src/scss/vue-select.scss`) instead if you want to drive it with your own variables.
+(`@alosha/vue-select/src/scss/vue-select.scss`) instead if you want to drive it with your own
+variables.
 
 ## The public API is intentionally unchanged
 
@@ -138,7 +146,7 @@ package** — it will shadow the bundled, accurate types.
 yarn remove @types/vue-select
 ```
 
-See the [README](https://github.com/sagalbot/vue-select#typescript) for the exported type names
+See the [README](../../README.md#typescript) for the exported type names
 (`VueSelectProps`, `VueSelectInstance`, `VueSelectOption`, …).
 
 ## What did **not** change
