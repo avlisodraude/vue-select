@@ -13,13 +13,17 @@ yarn add vue-select@beta
 npm install vue-select
 ```
 
-Then, import and register the component:
+Then, import and register the component. On Vue 3 (vue-select `4.x`), register it on the app
+instance created by `createApp`:
 
 ```js
-import Vue from 'vue'
+import { createApp } from 'vue'
 import vSelect from 'vue-select'
+import App from './App.vue'
 
-Vue.component('v-select', vSelect)
+const app = createApp(App)
+app.component('v-select', vSelect)
+app.mount('#app')
 ```
 
 The component itself does not include any CSS. You'll need to include it separately:
@@ -30,31 +34,30 @@ import 'vue-select/dist/vue-select.css';
 
 ## In the Browser
 
-vue-select ships as an UMD module that is accessible in the browser. When loaded
-in the browser, you can access the component through the `VueSelect.VueSelect` 
-global variable. You'll need to load Vue.js, vue-select JS & vue-select CSS.
+vue-select ships as a UMD module that is accessible in the browser. When loaded
+this way it registers itself on the `window['vue-select']` global. You'll need to load Vue 3,
+vue-select JS & vue-select CSS.
 
 ```html
-<!-- include VueJS first -->
-<script src="https://unpkg.com/vue@latest"></script>
+<!-- include Vue 3 first -->
+<script src="https://unpkg.com/vue@3"></script>
 
-<!-- use the latest vue-select release -->
-<script src="https://unpkg.com/vue-select@latest"></script>
-<link rel="stylesheet" href="https://unpkg.com/vue-select@latest/dist/vue-select.css">
-
-<!-- or point to a specific vue-select release -->
-<script src="https://unpkg.com/vue-select@3.0.0"></script>
-<link rel="stylesheet" href="https://unpkg.com/vue-select@3.0.0/dist/vue-select.css">
+<!-- the Vue 3 (beta) vue-select release -->
+<script src="https://unpkg.com/vue-select@beta"></script>
+<link rel="stylesheet" href="https://unpkg.com/vue-select@beta/dist/vue-select.css">
 ```
-Then register the component in your javascript:
+
+Then create your app and register the component from the global:
 
 ```js
-Vue.component('v-select', VueSelect.VueSelect);
+Vue.createApp({
+  /* ... */
+})
+  .component('v-select', window['vue-select'])
+  .mount('#app')
 ```
-
-<CodePen url="dJjzeP" />
 
 ## Vue Compatibility
 
-- Vue `2.x`, use vue-select `3.x`. 
-- Vue `3.x`, use vue-select `3.x@beta`.  
+- Vue `2.x`, use vue-select `3.x`.
+- Vue `3.x`, use vue-select `4.x` (currently published under the `beta` tag).

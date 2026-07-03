@@ -20,6 +20,7 @@ module.exports = {
           ['guide/install', 'Installation'],
           ['guide/options', 'Dropdown Options'],
           ['guide/values', 'Selecting Values'],
+          ['guide/migration', 'Migrating v3 → v4 (Vue 3)'],
           ['guide/upgrading', 'Upgrading 2.x to 3.x'],
         ],
       },
