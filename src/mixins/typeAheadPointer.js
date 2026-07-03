@@ -8,7 +8,7 @@ export default {
   watch: {
     filteredOptions() {
       for (let i = 0; i < this.filteredOptions.length; i++) {
-        if (this.selectable(this.filteredOptions[i])) {
+        if (this.isOptionSelectable(this.filteredOptions[i])) {
           this.typeAheadPointer = i
           break
         }
@@ -34,7 +34,7 @@ export default {
      */
     typeAheadUp() {
       for (let i = this.typeAheadPointer - 1; i >= 0; i--) {
-        if (this.selectable(this.filteredOptions[i])) {
+        if (this.isOptionSelectable(this.filteredOptions[i])) {
           this.typeAheadPointer = i
           break
         }
@@ -52,7 +52,7 @@ export default {
         i < this.filteredOptions.length;
         i++
       ) {
-        if (this.selectable(this.filteredOptions[i])) {
+        if (this.isOptionSelectable(this.filteredOptions[i])) {
           this.typeAheadPointer = i
           break
         }
@@ -67,7 +67,7 @@ export default {
     typeAheadSelect() {
       const typeAheadOption = this.filteredOptions[this.typeAheadPointer]
 
-      if (typeAheadOption && this.selectable(typeAheadOption)) {
+      if (typeAheadOption && this.isOptionSelectable(typeAheadOption)) {
         this.select(typeAheadOption)
       }
     },

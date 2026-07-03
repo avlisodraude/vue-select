@@ -105,17 +105,18 @@
           v-for="opt in visibleOptions"
           :id="`vs${uid}__option-${opt.index}`"
           :key="opt.key"
-          role="option"
+          :role="opt.group ? 'presentation' : 'option'"
           class="vs__dropdown-option"
           :class="{
+            'vs__dropdown-option--group': opt.group,
             'vs__dropdown-option--deselect':
               opt.deselectable && opt.index === typeAheadPointer,
             'vs__dropdown-option--selected': opt.selected,
             'vs__dropdown-option--highlight': opt.index === typeAheadPointer,
-            'vs__dropdown-option--disabled': !opt.selectable,
+            'vs__dropdown-option--disabled': !opt.group && !opt.selectable,
           }"
           :aria-selected="opt.selected ? true : null"
-          :aria-disabled="!opt.selectable ? true : null"
+          :aria-disabled="!opt.group && !opt.selectable ? true : null"
           @mouseover="opt.selectable ? (typeAheadPointer = opt.index) : null"
           @click.prevent.stop="opt.selectable ? select(opt.option) : null"
         >
@@ -1026,14 +1027,17 @@ export default {
      */
     filteredOptions() {
       const optionList = [].concat(this.optionList)
+      const hasGroups = optionList.some((option) => this.isOptionGroup(option))
 
-      if (!this.filterable && !this.taggable) {
+      if (!hasGroups && !this.filterable && !this.taggable) {
         return optionList
       }
 
-      const options = this.search.length
-        ? this.filter(optionList, this.search, this)
-        : optionList
+      const options = hasGroups
+        ? this.flattenGroupedOptions(optionList)
+        : this.search.length
+          ? this.filter(optionList, this.search, this)
+          : optionList
       if (this.taggable && this.search.length) {
         const createdOption = this.createOption(this.search)
         if (!this.optionExists(createdOption)) {
@@ -1087,7 +1091,8 @@ export default {
           index,
           key,
           label: this.getOptionLabel(option),
-          selectable: this.selectable(option),
+          group: this.isOptionGroup(option),
+          selectable: this.isOptionSelectable(option),
           selected,
           deselectable: selected && this.deselectFromDropdown,
         }
@@ -1444,6 +1449,70 @@ export default {
      */
     isOptionDeselectable(option) {
       return this.isOptionSelected(option) && this.deselectFromDropdown
+    },
+
+    /**
+     * Determine if the given entry in the `options` array is a group
+     * of options rather than a single option, i.e. an object with a
+     * nested `options` array:
+     *
+     *   { label: 'Fruits', options: [{ label: 'Apple', value: 1 }, …] }
+     *
+     * @see https://github.com/sagalbot/vue-select/issues/1870
+     * @param {Object|String} option
+     * @return {Boolean}
+     */
+    isOptionGroup(option) {
+      return (
+        !!option && typeof option === 'object' && Array.isArray(option.options)
+      )
+    },
+
+    /**
+     * Whether the given option can be highlighted and selected at all.
+     * Group headers are never selectable; everything else defers to the
+     * user-provided `selectable` prop.
+     *
+     * @param {Object|String} option
+     * @return {Boolean}
+     */
+    isOptionSelectable(option) {
+      return !this.isOptionGroup(option) && this.selectable(option)
+    },
+
+    /**
+     * Flatten a grouped `options` array into the flat list the dropdown
+     * renders: each group contributes a (non-selectable) header row
+     * followed by its child options. When searching, children are
+     * filtered per group and headers whose children were all filtered
+     * out are dropped entirely. Flat entries mixed in between groups
+     * are kept and filtered as usual.
+     *
+     * @see https://github.com/sagalbot/vue-select/issues/1870
+     * @param {Array} optionList
+     * @return {Array}
+     */
+    flattenGroupedOptions(optionList) {
+      const shouldFilter = this.filterable && this.search.length > 0
+      const applyFilter = (options) =>
+        shouldFilter
+          ? this.filter([].concat(options), this.search, this)
+          : [].concat(options)
+
+      const flattened = []
+      optionList.forEach((option) => {
+        if (!this.isOptionGroup(option)) {
+          flattened.push(...applyFilter([option]))
+          return
+        }
+
+        const children = applyFilter(option.options)
+        if (children.length) {
+          flattened.push(option, ...children)
+        }
+      })
+
+      return flattened
     },
 
     /**

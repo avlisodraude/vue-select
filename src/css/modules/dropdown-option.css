@@ -24,3 +24,9 @@
     color: var(--vs-state-disabled-color);
     cursor: var(--vs-state-disabled-cursor);
 }
+
+/* Group headers (#1870) — non-selectable rows introducing a group of options */
+.vs__dropdown-option--group {
+    font-weight: bold;
+    cursor: default;
+}

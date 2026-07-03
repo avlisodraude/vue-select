@@ -24,3 +24,9 @@
   color: $vs-state-disabled-color;
   cursor: inherit;
 }
+
+/* Group headers (#1870) — non-selectable rows introducing a group of options */
+.vs__dropdown-option--group {
+  font-weight: bold;
+  cursor: default;
+}
