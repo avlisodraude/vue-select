@@ -23,6 +23,7 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw*
+.claude
 
 # Project specific
 coverage
