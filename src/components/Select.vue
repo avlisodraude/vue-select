@@ -21,9 +21,11 @@
           :disabled="disabled"
         >
           <span :key="getOptionKey(option)" class="vs__selected">
+            <!-- `option` passes the raw reference — see the option slot (#1857). -->
             <slot
               name="selected-option"
               v-bind="normalizeOptionForSlot(option)"
+              :option="normalizeOptionForSlot(option)"
             >
               {{ getOptionLabel(option) }}
             </slot>
@@ -120,7 +122,18 @@
           @mouseover="opt.selectable ? (typeAheadPointer = opt.index) : null"
           @click.prevent.stop="opt.selectable ? select(opt.option) : null"
         >
-          <slot name="option" v-bind="normalizeOptionForSlot(opt.option)">
+          <!--
+            The `option` binding passes the option by reference, on top of
+            the spread: `v-bind` alone clones reactive objects into plain
+            objects, which strips class prototypes/getters and breaks
+            object identity (#1857). Consumers with class-instance options
+            should read `slotProps.option`.
+          -->
+          <slot
+            name="option"
+            v-bind="normalizeOptionForSlot(opt.option)"
+            :option="normalizeOptionForSlot(opt.option)"
+          >
             {{ opt.label }}
           </slot>
         </li>
@@ -405,7 +418,9 @@ export default {
       type: Function,
       default(option) {
         if (typeof option === 'object') {
-          if (!option.hasOwnProperty(this.label)) {
+          //  `in` (not `hasOwnProperty`) so labels defined as prototype
+          //  getters on class-instance options resolve too (#1857).
+          if (!(this.label in option)) {
             return console.warn(
               `[vue-select warn]: Label key "option.${this.label}" does not` +
                 ` exist in options object ${JSON.stringify(option)}.\n` +

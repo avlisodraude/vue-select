@@ -1,5 +1,5 @@
 import { it, test, describe, expect, vi } from 'vitest'
-import { h } from 'vue'
+import { h, reactive, toRaw } from 'vue'
 import { mountDefault } from '@tests/helpers.js'
 
 describe('Scoped Slots', () => {
@@ -239,6 +239,85 @@ describe('Scoped Slots', () => {
       'searching',
       'filteredOptions',
     ])
+  })
+
+  describe('Class-instance options keep identity and getters (#1857)', () => {
+    //  Model class with "virtual" prototype getters, as commonly produced
+    //  by ORMs (Sequelize/Mongoose) or domain model classes.
+    class Person {
+      constructor(firstName, lastName) {
+        this.firstName = firstName
+        this.lastName = lastName
+      }
+      get label() {
+        return this.fullName
+      }
+      get fullName() {
+        return `${this.firstName} ${this.lastName}`
+      }
+    }
+
+    it('option slot receives the original instance via the `option` slot prop', async () => {
+      const alice = new Person('Alice', 'Smith')
+      const option = vi.fn(() => null)
+      const Select = mountDefault({ options: [alice] }, { slots: { option } })
+
+      Select.vm.open = true
+      await Select.vm.$nextTick()
+
+      const slotProps = option.mock.calls[0][0]
+      expect(toRaw(slotProps.option)).toBe(alice)
+      expect(slotProps.option.fullName).toBe('Alice Smith')
+    })
+
+    it('keeps getters usable when options are reactive (the #1857 repro)', async () => {
+      //  The reporter bound options from a ref()/reactive() array. Vue's
+      //  renderSlot clones reactive slot-prop objects with a plain-object
+      //  spread, which strips prototype getters — the raw `option` slot
+      //  prop must survive that.
+      const alice = new Person('Alice', 'Smith')
+      const option = vi.fn(() => null)
+      const Select = mountDefault(
+        { options: reactive([alice]) },
+        { slots: { option } }
+      )
+
+      Select.vm.open = true
+      await Select.vm.$nextTick()
+
+      const slotProps = option.mock.calls[0][0]
+      expect(slotProps.option.fullName).toBe('Alice Smith')
+      expect(toRaw(slotProps.option)).toBe(alice)
+    })
+
+    it('selected-option slot receives the original instance via `option`', () => {
+      const alice = new Person('Alice', 'Smith')
+      const selectedOption = vi.fn(() => null)
+      mountDefault(
+        { options: [alice], modelValue: alice },
+        { slots: { 'selected-option': selectedOption } }
+      )
+
+      const slotProps = selectedOption.mock.calls[0][0]
+      expect(toRaw(slotProps.option)).toBe(alice)
+      expect(slotProps.option.fullName).toBe('Alice Smith')
+    })
+
+    it('getOptionLabel resolves a label defined as a prototype getter', () => {
+      const alice = new Person('Alice', 'Smith')
+      const spy = vi.spyOn(console, 'warn')
+      const Select = mountDefault({ options: [alice], modelValue: alice })
+
+      expect(Select.vm.getOptionLabel(alice)).toBe('Alice Smith')
+      expect(Select.get('.vs__selected').text()).toBe('Alice Smith')
+      expect(spy).not.toHaveBeenCalled()
+
+      //  Filtering goes through getOptionLabel too.
+      Select.vm.search = 'smith'
+      expect(Select.vm.filteredOptions).toEqual([alice])
+
+      spy.mockRestore()
+    })
   })
 
   test('list-footer slot props', async () => {
