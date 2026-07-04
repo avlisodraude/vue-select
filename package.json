@@ -1,12 +1,12 @@
 {
     "name": "@alosha/vue-select",
-    "version": "4.0.0",
+    "version": "4.0.1",
     "description": "Everything you wish the HTML <select> element could do, wrapped up into a lightweight, extensible Vue component.",
     "author": "Jeff Sagal <sagalbot@gmail.com>",
     "contributors": [
         "Eduardo Silva Navarrete (Alosha) <https://github.com/avlisodraude>"
     ],
-    "homepage": "https://github.com/avlisodraude/vue-select",
+    "homepage": "https://vue-select.alosha.dev",
     "directories": {
         "doc": "docs",
         "test": "tests"
