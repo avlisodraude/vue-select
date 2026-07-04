@@ -2,9 +2,8 @@ name: Release
 on:
   push:
     branches:
-      - master
+      - main
       - next
-      - beta
 jobs:
   release:
     runs-on: ubuntu-18.04
