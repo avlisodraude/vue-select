@@ -32,9 +32,9 @@
     "private": false,
     "license": "MIT",
     "packageManager": "yarn@1.22.22",
-    "prepare": "npm run build",
     "scripts": {
         "preinstall": "node ./scripts/verify-package-manager.js",
+        "prepublishOnly": "npm run build",
         "dev:docs": "cd docs && yarn serve",
         "build:docs": "cd docs && yarn build",
         "semantic-release": "semantic-release",
