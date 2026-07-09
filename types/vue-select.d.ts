@@ -54,6 +54,23 @@ export type VueSelectCalculatePosition = (
  */
 export type VueSelectDropdownShouldOpen = (component: VueSelectInstance) => boolean
 
+/**
+ * Overrides for the component's ARIA/accessibility strings (the `ariaLabels`
+ * prop). These back `aria-label`/`title` attributes rather than visible
+ * text, so — unlike the `no-options`/`spinner` slots — they can't be
+ * localized through slot content. Any key left out falls back to English.
+ */
+export interface VueSelectAriaLabels {
+  /** `aria-label` on the search input. Defaults to `'Search for option'`. */
+  search?: string
+  /** `title`/`aria-label` on the clear-selection button. Defaults to `'Clear Selected'`. */
+  clearSelection?: string
+  /** `title`/`aria-label` on a selected option's deselect button, given its label. Defaults to `` `Deselect ${optionLabel}` ``. */
+  deselectOption?: (optionLabel: string) => string
+  /** Text shown when no options match the current search. Defaults to `'Sorry, no matching options.'`. */
+  noOptions?: string
+}
+
 /** Public props accepted by `<v-select>` / `VueSelect`. */
 export interface VueSelectProps {
   /**
@@ -242,6 +259,9 @@ export interface VueSelectProps {
 
   /** Adds a `loading` class to the component and shows the `spinner` slot. */
   loading?: boolean
+
+  /** Overrides for the component's default English ARIA/accessibility strings. */
+  ariaLabels?: VueSelectAriaLabels
 }
 
 /** Object-form `emits` used to derive fully-typed event payloads. */

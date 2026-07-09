@@ -14,6 +14,34 @@ appendToBody: {
 ```
 
 
+## ariaLabels <Badge text="v4.1.0+" />
+
+Overrides the component's default English ARIA/accessibility strings. These
+back `aria-label`/`title` attributes rather than visible text, so — unlike
+the `no-options`/`spinner` slots — they can't be localized through slot
+content and need this prop instead. Any key left out falls back to English.
+
+See [Localization](../guide/localization.md#aria-accessibility-strings) for more details.
+
+```js
+ariaLabels: {
+  type: Object,
+  default: () => ({}),
+},
+```
+
+Accepted keys, with their English defaults:
+
+```js
+{
+  search: 'Search for option',
+  clearSelection: 'Clear Selected',
+  deselectOption: (optionLabel) => `Deselect ${optionLabel}`,
+  noOptions: 'Sorry, no matching options.',
+}
+```
+
+
 ## autocomplete
 
 The value provided here will be bound to the [autocomplete

@@ -35,8 +35,10 @@
               :disabled="disabled"
               type="button"
               class="vs__deselect"
-              :title="`Deselect ${getOptionLabel(option)}`"
-              :aria-label="`Deselect ${getOptionLabel(option)}`"
+              :title="mergedAriaLabels.deselectOption(getOptionLabel(option))"
+              :aria-label="
+                mergedAriaLabels.deselectOption(getOptionLabel(option))
+              "
               @click="deselect(option)"
             >
               <slot
@@ -146,7 +148,7 @@
         />
         <li v-if="filteredOptions.length === 0" class="vs__no-options">
           <slot name="no-options" v-bind="scope.noOptions">
-            Sorry, no matching options.
+            {{ mergedAriaLabels.noOptions }}
           </slot>
         </li>
         <slot name="list-footer" v-bind="scope.listFooter" />
@@ -749,6 +751,19 @@ export default {
       type: [String, Number],
       default: () => uniqueId(),
     },
+
+    /**
+     * Overrides the component's default English ARIA/accessibility
+     * strings, keyed by string name (see `mergedAriaLabels` for the
+     * defaults). Only the keys you want translated need to be provided —
+     * anything omitted falls back to English.
+     * @type {Object}
+     * @since v4.1.0
+     */
+    ariaLabels: {
+      type: Object,
+      default: () => ({}),
+    },
   },
 
   data() {
@@ -881,6 +896,24 @@ export default {
     },
 
     /**
+     * English defaults for the component's ARIA/accessibility strings,
+     * merged with any overrides passed via the `ariaLabels` prop. These
+     * back attributes (`aria-label`, `title`) rather than visible text,
+     * so — unlike the `no-options`/`spinner` slots — they can't be
+     * localized through slot content and need their own override point.
+     * @returns {Object}
+     */
+    mergedAriaLabels() {
+      return {
+        search: 'Search for option',
+        clearSelection: 'Clear Selected',
+        deselectOption: (optionLabel) => `Deselect ${optionLabel}`,
+        noOptions: 'Sorry, no matching options.',
+        ...this.ariaLabels,
+      }
+    },
+
+    /**
      * The object to be bound to the $slots.search slot.
      * @returns {Object}
      */
@@ -910,7 +943,7 @@ export default {
             role: 'combobox',
             'aria-expanded': this.dropdownOpen.toString(),
             'aria-autocomplete': 'list',
-            'aria-label': 'Search for option',
+            'aria-label': this.mergedAriaLabels.search,
             'aria-controls': `vs${this.uid}__listbox`,
             ref: 'search',
             type: 'search',
@@ -956,8 +989,8 @@ export default {
             disabled: this.disabled,
             type: 'button',
             class: 'vs__clear',
-            title: 'Clear Selected',
-            'aria-label': 'Clear Selected',
+            title: this.mergedAriaLabels.clearSelection,
+            'aria-label': this.mergedAriaLabels.clearSelection,
             onClick: this.clearSelection,
           },
           //  Whether the default button would render — use it to `v-show`/
@@ -1051,8 +1084,8 @@ export default {
       const options = hasGroups
         ? this.flattenGroupedOptions(optionList)
         : this.search.length
-          ? this.filter(optionList, this.search, this)
-          : optionList
+        ? this.filter(optionList, this.search, this)
+        : optionList
       if (this.taggable && this.search.length) {
         const createdOption = this.createOption(this.search)
         if (!this.optionExists(createdOption)) {

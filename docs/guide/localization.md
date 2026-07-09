@@ -43,3 +43,27 @@ All of the text within the component has been wrapped within [slots](https://vue
 ```
 
 For a full list of component slots, view the [slots API docs](../api/slots.md).
+
+## ARIA / Accessibility Strings
+
+Slots only cover visible text. A few strings back `aria-label`/`title`
+attributes instead — the search input's accessible name, the clear button,
+each selected option's deselect button, and the no-options text as read by
+assistive tech — and can't be overridden through slot content. Use the
+`ariaLabels` prop to translate them:
+
+```html
+<v-select
+  :options="options"
+  :aria-labels="{
+    search: 'Rechercher une option',
+    clearSelection: 'Effacer la sélection',
+    deselectOption: (label) => `Désélectionner ${label}`,
+    noOptions: 'Aucune option correspondante.',
+  }"
+></v-select>
+```
+
+Any key you omit falls back to the English default. See the
+[`ariaLabels` prop docs](../api/props.md#arialabels) for the full list of
+keys.

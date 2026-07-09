@@ -90,9 +90,9 @@ describe('WAI-ARIA combobox pattern', () => {
     Select.vm.open = true
     await Select.vm.$nextTick()
 
-    expect(Select.find('[role="listbox"]').attributes('aria-multiselectable')).toEqual(
-      'true'
-    )
+    expect(
+      Select.find('[role="listbox"]').attributes('aria-multiselectable')
+    ).toEqual('true')
   })
 
   it('does not set aria-multiselectable on a single-select listbox', async () => {
@@ -142,6 +142,64 @@ describe('Search Slot Scope', () => {
         Select.vm.scope.search.attributes['aria-activedescendant']
       ).toEqual(`vs${Select.vm.uid}__option-2`)
     })
+  })
+})
+
+describe('ariaLabels prop', () => {
+  it('defaults every string to English', () => {
+    const Select = selectWithProps({
+      modelValue: ['one'],
+      options: ['one', 'two'],
+      multiple: true,
+    })
+
+    expect(Select.get('input').attributes('aria-label')).toEqual(
+      'Search for option'
+    )
+    expect(Select.get('button.vs__clear').attributes('aria-label')).toEqual(
+      'Clear Selected'
+    )
+    expect(Select.get('button.vs__deselect').attributes('aria-label')).toEqual(
+      'Deselect one'
+    )
+  })
+
+  it('merges overrides on top of the English defaults, leaving omitted keys untranslated', () => {
+    const Select = selectWithProps({
+      modelValue: ['one'],
+      options: ['one', 'two'],
+      multiple: true,
+      ariaLabels: {
+        search: 'Rechercher une option',
+        deselectOption: (label) => `Désélectionner ${label}`,
+      },
+    })
+
+    expect(Select.get('input').attributes('aria-label')).toEqual(
+      'Rechercher une option'
+    )
+    expect(Select.get('button.vs__deselect').attributes('aria-label')).toEqual(
+      'Désélectionner one'
+    )
+    //  `clearSelection` was not overridden — still falls back to English.
+    expect(Select.get('button.vs__clear').attributes('aria-label')).toEqual(
+      'Clear Selected'
+    )
+  })
+
+  it('overrides the no-options text', async () => {
+    const Select = selectWithProps({
+      options: ['one'],
+      ariaLabels: { noOptions: 'Aucune option correspondante.' },
+    })
+
+    Select.vm.search = 'nonexistent'
+    Select.vm.open = true
+    await Select.vm.$nextTick()
+
+    expect(Select.find('.vs__no-options').text()).toEqual(
+      'Aucune option correspondante.'
+    )
   })
 })
 

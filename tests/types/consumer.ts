@@ -15,6 +15,7 @@
 
 import { h, ref } from 'vue'
 import VSelect, {
+  type VueSelectAriaLabels,
   type VueSelectClearSlotProps,
   type VueSelectDeselectSlotProps,
   type VueSelectHeaderFooterSlotProps,
@@ -94,6 +95,12 @@ const allProps: VueSelectProps = {
   uid: 'vs-1',
   autoscroll: true,
   loading: false,
+  ariaLabels: {
+    search: 'Rechercher une option',
+    clearSelection: 'Effacer la sélection',
+    deselectOption: (optionLabel) => `Désélectionner ${optionLabel}`,
+    noOptions: 'Aucune option correspondante.',
+  } satisfies VueSelectAriaLabels,
 }
 
 // ---------------------------------------------------------------------------
