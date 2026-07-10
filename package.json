@@ -33,7 +33,7 @@
     "license": "MIT",
     "packageManager": "yarn@1.22.22",
     "scripts": {
-        "preinstall": "node ./scripts/verify-package-manager.js",
+        "preinstall": "node -e \"const f='./scripts/verify-package-manager.js';require('fs').existsSync(f)&&require(f)\"",
         "prepublishOnly": "npm run build",
         "dev:docs": "cd docs && yarn serve",
         "build:docs": "cd docs && yarn build",
