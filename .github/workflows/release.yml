@@ -4,27 +4,39 @@ on:
     branches:
       - main
       - next
+
+# semantic-release needs to push the version-bump commit and create a GitHub
+# Release; the default GITHUB_TOKEN is read-only on modern repos, so grant the
+# writes it requires. id-token is for npm provenance if the npm plugin enables it.
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
 jobs:
   release:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
         with:
-          node-version: 16
+          # semantic-release derives the next version from the full tag/commit
+          # history — a shallow clone makes it misread or skip the release.
+          fetch-depth: 0
+          # semantic-release manages its own auth; the checkout token would
+          # otherwise shadow it when pushing the release commit.
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
           cache: yarn
-      - uses: actions/cache@v3
-        id: yarn-cache
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: ${{ runner.os }}-yarn-
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
       - name: Test
-        run: yarn test
+        run: yarn test --run
 
       - name: Build
         run: yarn build
