@@ -8,6 +8,9 @@ Customizable with slots and SCSS variables. Zero dependencies.
 
 ## Get started
 
+Requires Vue 3.2.0 or later in the Vue 3 series. Both ESM and UMD builds
+are smoke-tested against Vue 3.2.0.
+
 Install the package via npm or yarn:
 
 ```bash
@@ -107,6 +110,21 @@ const options = ref(["vue", "typescript", "vite"]);
   />
 </template>
 ```
+
+### Grouped options and large lists
+
+Pass groups as `{ label, options }` objects. With `reduce`, a selected
+child's ID can stay in `v-model` while the component displays its label,
+even when the current search hides that child.
+
+For very large lists with fixed-height rows, enable the experimental
+`virtual-scroll` prop and set `virtual-scroll-row-height` to the rendered
+row height in pixels. With autoscroll enabled, keyboard navigation brings the
+active row into view, including across virtual windows.
+
+See the [project site](https://vue-select.alosha.dev/) and the
+[changelog](https://github.com/avlisodraude/vue-select/blob/main/CHANGELOG.md)
+for compatibility and upgrade details.
 
 ## License
 
