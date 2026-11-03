@@ -1,11 +1,12 @@
 import { resolve } from 'path'
 import { fileURLToPath, URL } from 'url'
 
-import { defineConfig } from 'vite'
+import type { UserConfig } from 'vite'
+import type { InlineConfig } from 'vitest'
 import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default {
     plugins: [vue()],
     publicDir: false,
     resolve: {
@@ -39,4 +40,4 @@ export default defineConfig({
             reporter: ['lcov'],
         },
     },
-})
+} satisfies UserConfig & { test: InlineConfig }
