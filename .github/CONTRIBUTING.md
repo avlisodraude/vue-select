@@ -26,4 +26,10 @@ yarn test:browser
 The browser command builds the library first. The suite tests virtual-scroll
 layout and runs both package entry points against the minimum supported Vue runtime.
 
+## Verify npm trusted publishing
+
+Run the **Release** workflow manually from `main` to test the GitHub OIDC
+connection to npm. Manual runs always use semantic-release dry-run mode.
+To skip releasing on a push, include `[skip release]` in the head commit message.
+
 :tada: Thanks for contributing, and an even bigger thanks for reading these guidelines! 

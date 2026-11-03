@@ -1,13 +1,13 @@
 name: Release
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
       - next
 
 # semantic-release needs to push the version-bump commit and create a GitHub
-# Release; the default GITHUB_TOKEN is read-only on modern repos, so grant the
-# writes it requires. id-token is for npm provenance if the npm plugin enables it.
+# Release. npm exchanges the GitHub OIDC identity for publish authorization.
 permissions:
   contents: write
   issues: write
@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   release:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip release]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +30,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: yarn
+          node-version: '22.22.3'
+
+      - name: Install npm release tooling
+        run: |
+          npm install --global npm@11.21.1
+          npm ci --prefix scripts/release
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -42,7 +47,13 @@ jobs:
         run: yarn build
 
       - name: Release
+        if: github.event_name == 'push'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+        run: yarn semantic-release
+
+      - name: Verify trusted publishing without releasing
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn semantic-release --dry-run
