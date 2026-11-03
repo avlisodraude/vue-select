@@ -31,6 +31,7 @@ dist
 test/unit/coverage
 tests/browser/test-results/
 package-lock.json
+!scripts/release/package-lock.json
 dev/dist
 dist-ssr
 *.local
