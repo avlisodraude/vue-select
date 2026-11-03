@@ -27,19 +27,27 @@ export default {
      * @returns {*}
      */
     maybeAdjustScroll() {
-      const optionEl =
-        this.$refs.dropdownMenu?.children[this.typeAheadPointer] || false
+      const menu = this.$refs.dropdownMenu
+      const index = this.typeAheadPointer
+      if (!menu || index < 0 || index >= this.filteredOptions.length) return
+
+      const optionEl = menu.querySelector(`[data-option-index="${index}"]`)
 
       if (optionEl) {
         const bounds = this.getDropdownViewport()
         const { top, bottom, height } = optionEl.getBoundingClientRect()
 
         if (top < bounds.top) {
-          return (this.$refs.dropdownMenu.scrollTop = optionEl.offsetTop)
+          menu.scrollTop = optionEl.offsetTop
         } else if (bottom > bounds.bottom) {
-          return (this.$refs.dropdownMenu.scrollTop =
-            optionEl.offsetTop - (bounds.height - height))
+          menu.scrollTop = optionEl.offsetTop - (bounds.height - height)
         }
+      } else if (this.virtualScroll) {
+        menu.scrollTop = index * this.virtualScrollRowHeight
+      }
+
+      if (this.virtualScroll) {
+        this.virtualScrollTop = menu.scrollTop
       }
     },
 

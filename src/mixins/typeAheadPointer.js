@@ -7,12 +7,9 @@ export default {
 
   watch: {
     filteredOptions() {
-      for (let i = 0; i < this.filteredOptions.length; i++) {
-        if (this.isOptionSelectable(this.filteredOptions[i])) {
-          this.typeAheadPointer = i
-          break
-        }
-      }
+      this.typeAheadPointer = this.filteredOptions.findIndex((option) =>
+        this.isOptionSelectable(option)
+      )
     },
     open(open) {
       if (open) {

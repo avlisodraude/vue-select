@@ -93,9 +93,8 @@ describe('appendToBody directive', () => {
     it('calls el.unbindPosition() when it is a function', () => {
       const el = makeEl()
       const unbindFn = vi.fn()
-      el.unbindPosition = unbindFn
-      document.body.appendChild(el)
-      const instance = makeInstance()
+      const instance = makeInstance({ calculatePosition: () => unbindFn })
+      appendToBody.mounted(el, { instance })
 
       appendToBody.unmounted(el, { instance })
 
@@ -104,9 +103,9 @@ describe('appendToBody directive', () => {
 
     it('removes the element from its parent', () => {
       const el = makeEl()
-      document.body.appendChild(el)
-      expect(el.parentNode).toEqual(document.body)
       const instance = makeInstance()
+      appendToBody.mounted(el, { instance })
+      expect(el.parentNode).toEqual(document.body)
 
       appendToBody.unmounted(el, { instance })
 
@@ -115,10 +114,23 @@ describe('appendToBody directive', () => {
 
     it('does not throw when unbindPosition was never set (the default calculatePosition returns nothing)', () => {
       const el = makeEl()
-      document.body.appendChild(el)
       const instance = makeInstance()
+      appendToBody.mounted(el, { instance })
 
       expect(() => appendToBody.unmounted(el, { instance })).not.toThrow()
+      expect(el.parentNode).toBeNull()
+    })
+
+    it('cleans up a moved menu even if appendToBody was disabled before unmount', () => {
+      const el = makeEl()
+      const unbindFn = vi.fn()
+      const instance = makeInstance({ calculatePosition: () => unbindFn })
+      appendToBody.mounted(el, { instance })
+      instance.appendToBody = false
+
+      appendToBody.unmounted(el, { instance })
+
+      expect(unbindFn).toHaveBeenCalledTimes(1)
       expect(el.parentNode).toBeNull()
     })
 
