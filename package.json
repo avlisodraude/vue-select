@@ -43,10 +43,13 @@
         "build": "vue-tsc --noEmit && vite build && node scripts/copy-dts.mjs",
         "preview": "vite preview --port 5050",
         "test": "vitest --environment jsdom",
+        "test:browser": "yarn build && yarn --cwd tests/browser test",
         "coverage": "vitest --run --coverage --environment jsdom --silent",
         "typecheck": "vue-tsc --noEmit -p tsconfig.vitest.json --composite false",
+        "typecheck:config": "tsc --noEmit -p tsconfig.vite-config.json --composite false",
         "typecheck:types": "vue-tsc --noEmit -p tsconfig.types-test.json",
-        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+        "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
+        "lint:check": "eslint src --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --ignore-path .gitignore"
     },
     "repository": {
         "type": "git",
@@ -56,7 +59,7 @@
         "url": "https://github.com/avlisodraude/vue-select/issues"
     },
     "peerDependencies": {
-        "vue": "3.x"
+        "vue": "^3.2.0"
     },
     "devDependencies": {
         "@rushstack/eslint-patch": "^1.2.0",

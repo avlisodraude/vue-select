@@ -1,5 +1,6 @@
 ## Yarn / NPM
 
+The `@alosha/vue-select` package requires Vue 3.2.0 or later in the Vue 3 series.
 Install with yarn or npm:
 
 ```bash
