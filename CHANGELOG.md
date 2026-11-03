@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+### Compatibility
+
+- The peer dependency now requires Vue `^3.2.0`. The generated bundles use
+  rendering helpers introduced in Vue 3.2. Chromium smoke tests mount both the
+  ESM and UMD bundles on Vue 3.2.0 and verify keyboard selection and `v-model`.
+
+### Fixes
+
+- Controlled selections using `reduce` resolve grouped child options even
+  when search filters those children out.
+- Virtual scrolling brings the active option into view when opening on a distant
+  selection or navigating past the rendered window. The combobox references
+  the active option only while that option is rendered.
+- Filtering to an empty or entirely disabled list clears the keyboard highlight.
+- A dropdown moved to the document body still runs its positioning cleanup
+  when it closes after `appendToBody` is disabled.
+
+### Development
+
+- Refreshed library and documentation dependencies, including TypeScript 5.9,
+  `vue-tsc` 2.2, and Axios 1.21 for the docs.
+- Pull requests run source lint, type checks, and Chromium coverage for virtual
+  scrolling and minimum-Vue compatibility.
+
 ## [4.0.0] — 2026-07-03
 
 The first stable release of the Vue 3 line, published as `@alosha/vue-select`. This is a

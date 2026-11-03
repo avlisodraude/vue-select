@@ -65,6 +65,34 @@ describe('Automatic Scrolling', () => {
     expect(spy).toHaveBeenCalledTimes(0)
   })
 
+  it('renders and exposes a distant active option when navigating a virtual list', async () => {
+    const options = Array.from({ length: 100 }, (_, index) => `Option ${index}`)
+    const Select = mountDefault({
+      options,
+      modelValue: options[80],
+      virtualScroll: true,
+    })
+    const search = Select.get('input')
+    await search.trigger('focus')
+    await Select.vm.$nextTick()
+
+    const expectActiveOption = (label) => {
+      const id = search.attributes('aria-activedescendant')
+      expect(id).toBeTruthy()
+      expect(Select.get(`[id="${id}"]`).text()).toBe(label)
+    }
+    expectActiveOption(options[80])
+    expect(Select.vm.$refs.dropdownMenu.scrollTop).toBeGreaterThan(0)
+
+    await search.trigger('keydown.down')
+    expectActiveOption(options[81])
+
+    const menu = Select.get('[role=listbox]')
+    menu.element.scrollTop = 0
+    await menu.trigger('scroll')
+    expect(search.attributes('aria-activedescendant')).toBeUndefined()
+  })
+
   //  The tests above only assert that maybeAdjustScroll() was *called* —
   //  none of them exercise its actual scroll-adjustment math (the
   //  above/below-viewport branches in pointerScroll.js), so that logic

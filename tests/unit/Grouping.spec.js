@@ -24,6 +24,20 @@ const groupedOptions = [
 ]
 
 describe('Grouped options (#1870)', () => {
+  it('resolves reduced model values to group children even when search hides them', async () => {
+    const Select = selectWithProps({
+      options: groupedOptions,
+      modelValue: 1,
+      reduce: (option) => option.value,
+    })
+
+    expect(Select.vm.selectedValue).toEqual([groupedOptions[0].options[0]])
+    Select.vm.search = 'Carrot'
+    await Select.setProps({ modelValue: 2 })
+
+    expect(Select.vm.selectedValue).toEqual([groupedOptions[0].options[1]])
+  })
+
   it('flattens group children into filteredOptions, not just the group labels', () => {
     const Select = selectWithProps({ options: groupedOptions })
 

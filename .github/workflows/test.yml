@@ -2,7 +2,7 @@ name: Test & Build
 on: [pull_request]
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -22,16 +22,40 @@ jobs:
       - name: Test with Coverage
         run: yarn coverage
 
+      - name: Type Check
+        run: yarn typecheck && yarn typecheck:types && yarn typecheck:config
+
       - name: ESLint
-        run: yarn eslint
+        run: yarn lint:check
 
       - name: Report Coverage
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+  browser:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: |
+            yarn.lock
+            tests/browser/yarn.lock
+
+      - name: Install dependencies
+        run: |
+          yarn install --frozen-lockfile
+          yarn --cwd tests/browser install --frozen-lockfile
+          yarn --cwd tests/browser playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: yarn test:browser
+
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3

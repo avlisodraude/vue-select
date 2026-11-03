@@ -29,6 +29,7 @@ yarn-error.log*
 coverage
 dist
 test/unit/coverage
+tests/browser/test-results/
 package-lock.json
 dev/dist
 dist-ssr

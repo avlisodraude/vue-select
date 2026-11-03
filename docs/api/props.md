@@ -640,8 +640,7 @@ value: {
 Virtual scrolling is an early, opt-in foundation and its API may
 change. It currently assumes a **fixed row height** (see
 [`virtualScrollRowHeight`](#virtualscrollrowheight)) and does not yet
-fully account for variable-height rows, grouped options, or perfect
-keyboard-autoscroll alignment. Enable it only if you have a very large
+fully account for variable-height rows or grouped layouts. Enable it only if you have a very large
 option list and have verified it behaves for your use case.
 :::
 
@@ -650,6 +649,10 @@ scroll viewport (plus a small buffer) instead of one element per option.
 This keeps the DOM small — and rendering fast — for lists with thousands
 of options. Spacer elements above and below the rendered window preserve
 the scrollbar so the list still scrolls through every option.
+
+With `autoscroll` enabled, opening on a distant selection or moving the
+keyboard highlight brings the active row into view. The combobox exposes
+`aria-activedescendant` only while the highlighted row is rendered.
 
 ```js
 virtualScroll: {

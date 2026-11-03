@@ -13,6 +13,11 @@ syntax works with primitives and objects.
 
 Note that when using the `multiple` prop, the `v-model` value will always be an array.
 
+Grouped options work with `reduce`. For example, a group can contain
+`{ id: 'ca', label: 'Canada' }` and `v-model` can store just `'ca'`.
+The component resolves that ID to the child option even when the current
+search filters it out of the dropdown.
+
 ### Props and Events
 
 Sometimes `v-model` might not fit your use case. For example, when working

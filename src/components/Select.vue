@@ -108,6 +108,7 @@
         <li
           v-for="opt in visibleOptions"
           :id="`vs${uid}__option-${opt.index}`"
+          :data-option-index="opt.index"
           :key="opt.key"
           :role="opt.group ? 'presentation' : 'option'"
           class="vs__dropdown-option"
@@ -459,7 +460,7 @@ export default {
         }
 
         try {
-          return option.hasOwnProperty('id')
+          return Object.prototype.hasOwnProperty.call(option, 'id')
             ? option.id
             : sortAndStringify(option)
         } catch (e) {
@@ -853,6 +854,7 @@ export default {
       // Bookkeeping only, for the reduce-collision tie-break in
       // `findOptionFromReducedValue` — not part of the reactive value
       // model, so it's a plain instance property rather than `data()`.
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       this._lastResolvedValue = resolved
 
       return resolved
@@ -924,6 +926,13 @@ export default {
         searching: this.searching,
         filteredOptions: this.filteredOptions,
       }
+      const activeIndex = this.typeAheadPointer
+      const activeOptionIsRendered =
+        this.dropdownOpen &&
+        this.renderableOptions[activeIndex]?.selectable &&
+        (!this.virtualScroll ||
+          this.visibleOptions.some(({ index }) => index === activeIndex))
+
       return {
         search: {
           attributes: {
@@ -949,9 +958,9 @@ export default {
             type: 'search',
             autocomplete: this.autocomplete,
             value: this.search,
-            ...(this.dropdownOpen && this.filteredOptions[this.typeAheadPointer]
+            ...(activeOptionIsRendered
               ? {
-                  'aria-activedescendant': `vs${this.uid}__option-${this.typeAheadPointer}`,
+                  'aria-activedescendant': `vs${this.uid}__option-${activeIndex}`,
                 }
               : {}),
           },
@@ -1586,7 +1595,13 @@ export default {
       const predicate = (option) =>
         JSON.stringify(this.reduce(option)) === JSON.stringify(value)
 
-      const matches = [...this.options, ...this.pushedTags].filter(predicate)
+      const matches = []
+      for (const entry of [...this.options, ...this.pushedTags]) {
+        const options = this.isOptionGroup(entry) ? entry.options : [entry]
+        for (const option of options) {
+          if (predicate(option)) matches.push(option)
+        }
+      }
 
       if (matches.length === 1) {
         return matches[0]

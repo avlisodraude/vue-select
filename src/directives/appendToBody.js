@@ -1,14 +1,12 @@
+const appendedMenus = new WeakSet()
+
 export default {
   mounted(el, { instance }) {
     if (instance.appendToBody) {
-      const {
-        height,
-        top,
-        left,
-        width,
-      } = instance.$refs.toggle.getBoundingClientRect()
-      let scrollX = window.scrollX || window.pageXOffset
-      let scrollY = window.scrollY || window.pageYOffset
+      const { height, top, left, width } =
+        instance.$refs.toggle.getBoundingClientRect()
+      const scrollX = window.scrollX || window.pageXOffset
+      const scrollY = window.scrollY || window.pageYOffset
       el.unbindPosition = instance.calculatePosition(el, instance, {
         width: width + 'px',
         left: scrollX + left + 'px',
@@ -16,16 +14,18 @@ export default {
       })
 
       document.body.appendChild(el)
+      appendedMenus.add(el)
     }
   },
 
-  unmounted(el, { instance }) {
-    if (instance.appendToBody) {
-      if (el.unbindPosition && typeof el.unbindPosition === 'function') {
-        el.unbindPosition()
-      }
-      if (el.parentNode) {
-        el.parentNode.removeChild(el)
+  unmounted(el) {
+    if (appendedMenus.delete(el)) {
+      try {
+        if (typeof el.unbindPosition === 'function') {
+          el.unbindPosition()
+        }
+      } finally {
+        el.remove()
       }
     }
   },

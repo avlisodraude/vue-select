@@ -1,0 +1,11 @@
+{
+  "name": "vue-select-browser-tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "vue-minimum": "npm:vue@3.2.0"
+  }
+}

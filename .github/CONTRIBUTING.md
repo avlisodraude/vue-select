@@ -9,4 +9,21 @@ Looks like you want to help out on vue-select.. awesome! Here's a few things to 
 - If your PR fixes or references an open issue, be sure to reference it in your message.
 - If you're adding new functionality, make sure your code has good test coverage.
 
+## Local checks
+
+Install dependencies with `yarn install --frozen-lockfile`. Run
+`yarn lint:check`, `yarn coverage`, `yarn typecheck`, `yarn typecheck:types`,
+and `yarn typecheck:config` from the repository root.
+
+For the Chromium suite, use Node 22 and run:
+
+```sh
+yarn --cwd tests/browser install --frozen-lockfile
+yarn --cwd tests/browser playwright install chromium
+yarn test:browser
+```
+
+The browser command builds the library first. The suite tests virtual-scroll
+layout and runs both package entry points against the minimum supported Vue runtime.
+
 :tada: Thanks for contributing, and an even bigger thanks for reading these guidelines! 

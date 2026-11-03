@@ -26,6 +26,25 @@ describe('Moving the Typeahead Pointer', () => {
     expect(Select.vm.typeAheadPointer).toEqual(0)
   })
 
+  it('clears the pointer when a filter leaves only disabled options', async () => {
+    const Select = mountDefault({
+      options: ['alpha', 'beta', 'blocked'],
+      selectable: (option) => option !== 'blocked',
+    })
+    const search = Select.get('input')
+    await search.trigger('focus')
+    await search.trigger('keydown.down')
+    await search.trigger('keydown.down')
+    expect(Select.vm.typeAheadPointer).toBe(1)
+
+    await search.setValue('blocked')
+    expect(Select.vm.filteredOptions).toEqual(['blocked'])
+    expect(Select.vm.typeAheadPointer).toBe(-1)
+
+    await search.setValue('alpha')
+    expect(Select.vm.typeAheadPointer).toBe(0)
+  })
+
   it('should move the pointer visually down the list on down arrow keyUp', () => {
     const Select = mountDefault()
 
